@@ -1,0 +1,47 @@
+name: C# build and test
+on: 
+  push:
+    paths-ignore:
+      - '.github/workflows/**'
+      - 'README.md'
+  pull_request:
+    paths-ignore:
+      - '.github/workflows/**'
+      - 'README.md'
+
+jobs:
+  test-Windows:  
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2.7.0
+      
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.x'
+        
+      - name: Lint
+        run: Get-ChildItem -Path . -Filter *.sln -Recurse | ForEach-Object { dotnet format $_.FullName }
+        
+      - name: Build Solutions
+        run: Get-ChildItem -Path . -Filter *.sln -Recurse | ForEach-Object { dotnet build $_.FullName }
+        
+      - name: Run Tests
+        run: Get-ChildItem -Path . -Filter *.sln -Recurse | ForEach-Object { dotnet test $_.FullName }
+  
+  test-Ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.7.0
+      
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.x'
+      
+      - name: Lint
+        run: find . -name "*.sln" -exec dotnet format {} \;
+        
+      - name: Build Solutions
+        run: find . -name "*.sln" -exec dotnet build {} \;
+        
+      - name: Run Tests
+        run: find . -name "*.sln" -exec dotnet test {} \;
