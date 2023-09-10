@@ -1,28 +1,12 @@
-﻿using MatrixMultiplication;
+﻿using System.Threading.Channels;
+using MatrixMultiplication;
 
 
-var firstMatrix = Matrix.GenerateMatrix(10, 10);
-var secondMatrix = Matrix.GenerateMatrix(10, 10);
+var firstMatrix = new Matrix(@"C:\Users\Егор\Desktop\matrix1.txt");
+var secondMatrix = new Matrix(@"C:\Users\Егор\Desktop\matrix2.txt");
 
-var resultMatrixData1 = firstMatrix.Multiply(secondMatrix).MatrixData;
-var resultMatrixData2 = firstMatrix.ParallelMultiply(secondMatrix).MatrixData;
+var resultMatrixData1 = firstMatrix.Multiply(secondMatrix);
+var resultMatrixData2 = firstMatrix.ParallelMultiply(secondMatrix);
 
-
-for (var i = 0; i < resultMatrixData1.GetLength(0); ++i)
-{
-    Console.WriteLine();
-    for (var j = 0; j < resultMatrixData1.GetLength(1); ++j)
-    {
-        Console.Write(resultMatrixData1[i, j] + " ");
-    }
-}
-
-
-for (var i = 0; i < resultMatrixData2.GetLength(0); ++i)
-{
-    Console.WriteLine();
-    for (var j = 0; j < resultMatrixData2.GetLength(1); ++j)
-    {
-        Console.Write(resultMatrixData2[i, j] + " ");
-    }
-}
+Console.WriteLine(resultMatrixData1);
+Console.WriteLine(resultMatrixData2);
