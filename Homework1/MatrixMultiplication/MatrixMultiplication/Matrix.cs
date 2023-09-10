@@ -13,6 +13,7 @@ public class Matrix
         Columns = data.GetLength(1);
     }
 
+    
     public Matrix Multiply(Matrix secondMatrix)
     {
         if (!MultiplicationMatching(secondMatrix))
@@ -36,13 +37,67 @@ public class Matrix
         return newMatrix;
     }
 
-    bool MultiplicationMatching(Matrix secondMatrix)
+    public Matrix ParallelMultiply(Matrix secondMatrix)
     {
-        if (Columns != secondMatrix.Rows)
+        if (!MultiplicationMatching(secondMatrix))
         {
-            return false;
+            throw new ArgumentException();
         }
 
-        return true;
+        var newMatrixData = new int[Rows, secondMatrix.Columns];
+        var newMatrixItemsCount = Rows * secondMatrix.Columns;
+
+        var threadsCount = Environment.ProcessorCount;
+        var threads = new Thread[threadsCount];
+
+        var itemsForThread = (newMatrixItemsCount) / threadsCount;
+        var remainder = (newMatrixItemsCount) % threadsCount;
+
+        for (var threadNumber = 0; threadNumber < threadsCount; ++threadNumber)
+        {
+            var nestedThreadNumber = threadNumber;
+            threads[threadNumber] = new Thread(() =>
+            {
+                var startedItemNumber = threadsCount * itemsForThread;
+                var lastItemNumber = startedItemNumber + itemsForThread;
+
+                if (nestedThreadNumber < remainder)
+                {
+                    startedItemNumber += nestedThreadNumber;
+                    lastItemNumber += nestedThreadNumber + 1;
+                }
+                else
+                {
+                    startedItemNumber += remainder;
+                    lastItemNumber += remainder;
+                }
+                
+                for (var itemNumber = startedItemNumber; itemNumber < lastItemNumber; ++itemNumber)
+                {
+                    var row = itemNumber / Rows;
+                    var column = itemNumber % secondMatrix.Columns;
+
+                    for (var i = 0; i < Columns; ++i)
+                    {
+                        newMatrixData[row, column] += MatrixData[row, i] * secondMatrix.MatrixData[i, column];
+                    }
+                }
+            });
+        }
+
+        foreach (var thread in threads)
+        {
+            thread.Start();
+        }
+
+        foreach (var thread in threads)
+        {
+            thread.Join();
+        }
+        
+        var newMatrix = new Matrix(newMatrixData);
+        return newMatrix;
     }
+    
+    private bool MultiplicationMatching(Matrix secondMatrix) => Columns == secondMatrix.Rows;
 }
