@@ -8,7 +8,6 @@ var resultMatrixData1 = firstMatrix.Multiply(secondMatrix).MatrixData;
 var resultMatrixData2 = firstMatrix.ParallelMultiply(secondMatrix).MatrixData;
 
 
-
 for (var i = 0; i < resultMatrixData1.GetLength(0); ++i)
 {
     Console.WriteLine();

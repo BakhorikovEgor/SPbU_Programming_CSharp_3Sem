@@ -52,7 +52,6 @@ public class Matrix
         return new Matrix(newMatrixData);
     }
 
-
     public Matrix ParallelMultiply(Matrix secondMatrix)
     {
         if (!MultiplicationMatching(secondMatrix))
