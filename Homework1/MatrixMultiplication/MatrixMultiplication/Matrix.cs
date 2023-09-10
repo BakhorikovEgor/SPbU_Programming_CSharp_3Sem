@@ -37,7 +37,7 @@ public class Matrix
                 columnsCount = raw.Length;
                 raws.Add(raw);
             }
-            catch (FormatException e)
+            catch (FormatException)
             {
                 throw new ArgumentException("Given file does not contain matrix");
             }
