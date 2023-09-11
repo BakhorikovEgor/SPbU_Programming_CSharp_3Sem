@@ -1,8 +1,9 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MatrixMultiplication;
 
-public class Matrix
+public partial class Matrix
 {
     private static readonly Random Rand = new Random();
     public int[,] MatrixData { get; }
@@ -21,21 +22,21 @@ public class Matrix
     {
         using var stream = new StreamReader(path);
 
-        var raws = new List<int[]>();
+        var rows = new List<int[]>();
         var columnsCount = 0;
+
         while (stream.ReadLine() is { } line)
         {
             try
             {
-                var raw = line.Split(" ", StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
-
-                if (columnsCount != 0 && raw.Length != columnsCount)
+                var row = MyRegex().Matches(line).Select(match => int.Parse(match.Value)).ToArray();
+                if (columnsCount != 0 && row.Length != columnsCount)
                 {
                     throw new ArgumentException("Given file does not contain matrix");
                 }
-                
-                columnsCount = raw.Length;
-                raws.Add(raw);
+
+                columnsCount = row.Length;
+                rows.Add(row);
             }
             catch (FormatException)
             {
@@ -43,13 +44,13 @@ public class Matrix
             }
         }
 
-        var rowsCount = raws.Count;
+        var rowsCount = rows.Count;
         var matrixData = new int[rowsCount, columnsCount];
         for (var i = 0; i < rowsCount; ++i)
         {
             for (var j = 0; j < columnsCount; ++j)
             {
-                matrixData[i, j] = raws[i][j];
+                matrixData[i, j] = rows[i][j];
             }
         }
 
@@ -109,25 +110,26 @@ public class Matrix
         var threadsCount = Environment.ProcessorCount;
         var threads = new Thread[threadsCount];
 
-        var itemsForThread = (newMatrixItemsCount) / threadsCount;
-        var remainder = (newMatrixItemsCount) % threadsCount;
+        var itemsForThread = newMatrixItemsCount / threadsCount;
+        var remainder = newMatrixItemsCount % threadsCount;
 
         for (var threadNumber = 0; threadNumber < threadsCount; ++threadNumber)
         {
             var nestedThreadNumber = threadNumber;
             threads[threadNumber] = new Thread(() =>
             {
-                var startedItemNumber = nestedThreadNumber * itemsForThread + Math.Min(nestedThreadNumber, remainder);
-                var lastItemNumber = startedItemNumber + itemsForThread;
-
-                if (nestedThreadNumber < remainder)
-                {
-                    lastItemNumber++;
-                }
+                var startedItemNumber = nestedThreadNumber * itemsForThread +
+                    nestedThreadNumber < remainder
+                        ? nestedThreadNumber
+                        : remainder;
+                var lastItemNumber = startedItemNumber + itemsForThread +
+                    nestedThreadNumber < remainder
+                        ? 1
+                        : 0;
 
                 for (var itemNumber = startedItemNumber; itemNumber < lastItemNumber; ++itemNumber)
                 {
-                    var row = itemNumber / RowsCount;
+                    var row = itemNumber / secondMatrix.ColumnsCount;
                     var column = itemNumber % secondMatrix.ColumnsCount;
 
                     for (var i = 0; i < ColumnsCount; ++i)
@@ -150,8 +152,15 @@ public class Matrix
 
         return new Matrix(newMatrixData);
     }
-    
-    
+
+
+    public void SaveToFile(string path)
+    {
+        using var writer = new StreamWriter(path);
+        writer.Write(this);
+    }
+
+
     public override string ToString()
     {
         var builder = new StringBuilder();
@@ -168,6 +177,10 @@ public class Matrix
         return builder.ToString();
     }
 
-    
+
     private bool MultiplicationMatching(Matrix secondMatrix) => ColumnsCount == secondMatrix.RowsCount;
+
+    
+    [GeneratedRegex("-?\\d+")]
+    private static partial Regex MyRegex();
 }
