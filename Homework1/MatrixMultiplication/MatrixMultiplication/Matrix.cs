@@ -3,13 +3,33 @@ using System.Text.RegularExpressions;
 
 namespace MatrixMultiplication;
 
-public partial class Matrix
+
+/// <summary>
+/// A class representing a matrix of rows and columns.
+/// </summary>
+public class Matrix
 {
     private static readonly Random Rand = new Random();
+    
+    /// <summary>
+    /// Matrix elements.
+    /// </summary>
     public int[,] MatrixData { get; }
+    
+    /// <summary>
+    /// Number of rows.
+    /// </summary>
     public int RowsCount { get; }
+    
+    /// <summary>
+    /// Number of columns.
+    /// </summary>
     public int ColumnsCount { get; }
 
+    /// <summary>
+    /// Standard constructor of Matrix.
+    /// </summary>
+    /// <param name="data"> Matrix elements. </param>
     public Matrix(int[,] data)
     {
         MatrixData = data;
@@ -18,10 +38,16 @@ public partial class Matrix
     }
 
 
+    /// <summary>
+    /// Matrix constructor for obtaining a matrix from a file.
+    /// </summary>
+    /// <param name="path"> Path to file with matrix. </param>
+    /// <exception cref="ArgumentException"> Given file does not contain matrix. </exception>
+    /// <exception cref="FileNotFoundException"> There is no file at the specified path. </exception>
     public Matrix(string path)
     {
         using var stream = new StreamReader(path);
-
+        
         var rows = new List<int[]>();
         var columnsCount = 0;
 
@@ -29,7 +55,7 @@ public partial class Matrix
         {
             try
             {
-                var row = MyRegex().Matches(line).Select(match => int.Parse(match.Value)).ToArray();
+                var row = new Regex("-?\\d+", RegexOptions.Compiled).Matches(line).Select(match => int.Parse(match.Value)).ToArray();
                 if (columnsCount != 0 && row.Length != columnsCount)
                 {
                     throw new ArgumentException("Given file does not contain matrix");
@@ -60,6 +86,12 @@ public partial class Matrix
     }
 
 
+    /// <summary>
+    /// Generate new matrix with random elements.
+    /// </summary>
+    /// <param name="rows"> Number of rows in generated matrix. </param>
+    /// <param name="columns"> Number of columns in generated matrix. </param>
+    /// <returns> New Matrix. </returns>
     public static Matrix GenerateMatrix(int rows, int columns)
     {
         var newMatrixData = new int[rows, columns];
@@ -75,6 +107,14 @@ public partial class Matrix
     }
 
 
+    /// <summary>
+    /// Standard sequential matrix multiplication algorithm.
+    ///
+    /// To multiply matrices, the number of columns in the first matrix must equal the number of rows in the second.
+    /// </summary>
+    /// <param name="secondMatrix">The matrix by which the current matrix is multiplied. </param>
+    /// <returns> New matrix - result of multiplication. </returns>
+    /// <exception cref="ArgumentException"> The matrix sizes are not correlated for multiplication. </exception>
     public Matrix Multiply(Matrix secondMatrix)
     {
         if (!MultiplicationMatching(secondMatrix))
@@ -97,6 +137,13 @@ public partial class Matrix
         return new Matrix(newMatrixData);
     }
 
+    /// <summary>
+    /// Matrix multiplication algorithm using parallel computing.
+    /// To multiply matrices, the number of columns in the first matrix must equal the number of rows in the second.
+    /// </summary>
+    /// <param name="secondMatrix"></param>
+    /// <returns> New matrix - result of multiplication. </returns>
+    /// <exception cref="ArgumentException"> The matrix sizes are not correlated for multiplication. </exception>
     public Matrix ParallelMultiply(Matrix secondMatrix)
     {
         if (!MultiplicationMatching(secondMatrix))
@@ -154,6 +201,10 @@ public partial class Matrix
     }
 
 
+    /// <summary>
+    /// Save current matrix in file using standard representation. 
+    /// </summary>
+    /// <param name="path"> The path to save the matrix. </param>
     public void SaveToFile(string path)
     {
         using var writer = new StreamWriter(path);
@@ -161,6 +212,7 @@ public partial class Matrix
     }
 
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         var builder = new StringBuilder();
@@ -179,8 +231,4 @@ public partial class Matrix
 
 
     private bool MultiplicationMatching(Matrix secondMatrix) => ColumnsCount == secondMatrix.RowsCount;
-
-    
-    [GeneratedRegex("-?\\d+")]
-    private static partial Regex MyRegex();
 }

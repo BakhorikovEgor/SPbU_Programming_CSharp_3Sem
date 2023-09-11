@@ -2,6 +2,9 @@
 
 namespace MatrixMultiplication;
 
+/// <summary>
+/// A static class that allows you to generate a set of reports  for matrices with different sizes.
+/// </summary>
 public static class ReportsCreator
 {
     private static readonly Random Rand = new();
@@ -11,7 +14,11 @@ public static class ReportsCreator
     private const int ExperimentsCount = 4;
     private const int ExperimentRetryCount = 5;
 
-
+    
+    /// <summary>
+    /// Generates an array of reports on the multiplication of matrices with different sizes.
+    /// </summary>
+    /// <returns> Array of reports. </returns>
     public static Report[] CreateReports()
     {
         var reports = new Report[ExperimentsCount];
