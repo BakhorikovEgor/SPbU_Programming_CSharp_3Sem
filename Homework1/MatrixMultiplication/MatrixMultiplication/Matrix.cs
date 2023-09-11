@@ -56,7 +56,10 @@ public class Matrix
             {
                 var row = new Regex("-?\\d+", RegexOptions.Compiled).Matches(line)
                     .Select(match => int.Parse(match.Value)).ToArray();
-                if (columnsCount != 0 && row.Length != columnsCount)
+                
+                if (row.Length == 0) continue;
+                
+                if (columnsCount != 0  && row.Length != columnsCount)
                 {
                     throw new ArgumentException("Given file does not contain matrix");
                 }
@@ -164,13 +167,13 @@ public class Matrix
             threads[threadNumber] = new Thread(() =>
             {
                 var startedItemNumber = nestedThreadNumber * itemsForThread +
-                    nestedThreadNumber < remainder
+                    (nestedThreadNumber < remainder
                         ? nestedThreadNumber
-                        : remainder;
+                        : remainder);
                 var lastItemNumber = startedItemNumber + itemsForThread +
-                    nestedThreadNumber < remainder
+                    (nestedThreadNumber < remainder
                         ? 1
-                        : 0;
+                        : 0);
 
                 for (var itemNumber = startedItemNumber; itemNumber < lastItemNumber; ++itemNumber)
                 {

@@ -4,6 +4,7 @@ using MatrixMultiplication;
 using Matrix = MatrixMultiplication.Matrix;
 
 
+
 ForegroundColor = ConsoleColor.Green;
 
 if (args.Length == 0 || args[0] == "-help")
