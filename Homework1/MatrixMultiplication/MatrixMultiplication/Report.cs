@@ -4,7 +4,7 @@
 /// A structure representing the result of collecting statistics on the
 /// multiplication of two given matrices in different ways
 /// </summary>
-public struct Report
+internal struct Report
 {
     /// <summary>
     /// Number of rows in first matrix.

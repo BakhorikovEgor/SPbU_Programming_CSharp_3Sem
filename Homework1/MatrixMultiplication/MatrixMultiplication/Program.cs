@@ -86,8 +86,8 @@ else
 {
     try
     {
-        var firstMatrix = new Matrix(args[0]);
-        var secondMatrix = new Matrix(args[1]);
+        var firstMatrix = Matrix.ReadMatrixFromFile(args[0]);
+        var secondMatrix = Matrix.ReadMatrixFromFile(args[1]);
 
         var resultMatrix = firstMatrix.ParallelMultiply(secondMatrix);
         resultMatrix.SaveToFile("ResultMatrix.txt");

@@ -3,24 +3,23 @@ using System.Text.RegularExpressions;
 
 namespace MatrixMultiplication;
 
-
 /// <summary>
 /// A class representing a matrix of rows and columns.
 /// </summary>
 public class Matrix
 {
     private static readonly Random Rand = new Random();
-    
+
     /// <summary>
     /// Matrix elements.
     /// </summary>
     public int[,] MatrixData { get; }
-    
+
     /// <summary>
     /// Number of rows.
     /// </summary>
     public int RowsCount { get; }
-    
+
     /// <summary>
     /// Number of columns.
     /// </summary>
@@ -39,15 +38,15 @@ public class Matrix
 
 
     /// <summary>
-    /// Matrix constructor for obtaining a matrix from a file.
+    /// Creates Matrix object using file.
     /// </summary>
     /// <param name="path"> Path to file with matrix. </param>
     /// <exception cref="ArgumentException"> Given file does not contain matrix. </exception>
     /// <exception cref="FileNotFoundException"> There is no file at the specified path. </exception>
-    public Matrix(string path)
+    public static Matrix ReadMatrixFromFile(string path)
     {
         using var stream = new StreamReader(path);
-        
+
         var rows = new List<int[]>();
         var columnsCount = 0;
 
@@ -55,7 +54,8 @@ public class Matrix
         {
             try
             {
-                var row = new Regex("-?\\d+", RegexOptions.Compiled).Matches(line).Select(match => int.Parse(match.Value)).ToArray();
+                var row = new Regex("-?\\d+", RegexOptions.Compiled).Matches(line)
+                    .Select(match => int.Parse(match.Value)).ToArray();
                 if (columnsCount != 0 && row.Length != columnsCount)
                 {
                     throw new ArgumentException("Given file does not contain matrix");
@@ -80,9 +80,7 @@ public class Matrix
             }
         }
 
-        MatrixData = matrixData;
-        RowsCount = rowsCount;
-        ColumnsCount = columnsCount;
+        return new Matrix(matrixData);
     }
 
 
@@ -228,7 +226,6 @@ public class Matrix
 
         return builder.ToString();
     }
-
 
     private bool MultiplicationMatching(Matrix secondMatrix) => ColumnsCount == secondMatrix.RowsCount;
 }

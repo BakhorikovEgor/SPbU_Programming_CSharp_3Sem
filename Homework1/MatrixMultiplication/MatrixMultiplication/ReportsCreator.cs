@@ -5,7 +5,7 @@ namespace MatrixMultiplication;
 /// <summary>
 /// A static class that allows you to generate a set of reports  for matrices with different sizes.
 /// </summary>
-public static class ReportsCreator
+internal static class ReportsCreator
 {
     private static readonly Random Rand = new();
 
