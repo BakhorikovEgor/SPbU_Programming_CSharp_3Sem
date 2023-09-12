@@ -10,10 +10,7 @@ public class Matrix
 {
     private static readonly Random Rand = new Random();
 
-    /// <summary>
-    /// Matrix elements.
-    /// </summary>
-    public int[,] MatrixData { get; }
+    private readonly int[,] _matrixData;
 
     /// <summary>
     /// Number of rows.
@@ -31,9 +28,49 @@ public class Matrix
     /// <param name="data"> Matrix elements. </param>
     public Matrix(int[,] data)
     {
-        MatrixData = data;
+        _matrixData = (int[,])data.Clone();
         RowsCount = data.GetLength(0);
         ColumnsCount = data.GetLength(1);
+    }
+
+
+    /// <summary>
+    /// Get element of matrix by indexes.
+    /// </summary>
+    public int this[int x, int y] => _matrixData[x, y];
+
+
+    /// <summary>
+    /// Checks if matrices are equal by elements
+    /// </summary>
+    public static bool operator ==(Matrix firstMatrix, Matrix secondMatrix)
+    {
+        if (firstMatrix.RowsCount != secondMatrix.RowsCount ||
+            firstMatrix.ColumnsCount != secondMatrix.ColumnsCount)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < firstMatrix.RowsCount; ++i)
+        {
+            for (var j = 0; j < firstMatrix.ColumnsCount; ++j)
+            {
+                if (firstMatrix._matrixData[i, j] != secondMatrix._matrixData[i, j])
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Checks if matrices are not equal
+    /// </summary>
+    public static bool operator !=(Matrix firstMatrix, Matrix secondMatrix)
+    {
+        return !(firstMatrix == secondMatrix);
     }
 
 
@@ -56,10 +93,10 @@ public class Matrix
             {
                 var row = new Regex("-?\\d+", RegexOptions.Compiled).Matches(line)
                     .Select(match => int.Parse(match.Value)).ToArray();
-                
+
                 if (row.Length == 0) continue;
-                
-                if (columnsCount != 0  && row.Length != columnsCount)
+
+                if (columnsCount != 0 && row.Length != columnsCount)
                 {
                     throw new ArgumentException("Given file does not contain matrix");
                 }
@@ -130,7 +167,7 @@ public class Matrix
             {
                 for (var k = 0; k < ColumnsCount; ++k)
                 {
-                    newMatrixData[i, j] += MatrixData[i, k] * secondMatrix.MatrixData[k, j];
+                    newMatrixData[i, j] += _matrixData[i, k] * secondMatrix._matrixData[k, j];
                 }
             }
         }
@@ -167,13 +204,13 @@ public class Matrix
             threads[threadNumber] = new Thread(() =>
             {
                 var startedItemNumber = nestedThreadNumber * itemsForThread +
-                    (nestedThreadNumber < remainder
-                        ? nestedThreadNumber
-                        : remainder);
+                                        (nestedThreadNumber < remainder
+                                            ? nestedThreadNumber
+                                            : remainder);
                 var lastItemNumber = startedItemNumber + itemsForThread +
-                    (nestedThreadNumber < remainder
-                        ? 1
-                        : 0);
+                                     (nestedThreadNumber < remainder
+                                         ? 1
+                                         : 0);
 
                 for (var itemNumber = startedItemNumber; itemNumber < lastItemNumber; ++itemNumber)
                 {
@@ -182,7 +219,7 @@ public class Matrix
 
                     for (var i = 0; i < ColumnsCount; ++i)
                     {
-                        newMatrixData[row, column] += MatrixData[row, i] * secondMatrix.MatrixData[i, column];
+                        newMatrixData[row, column] += _matrixData[row, i] * secondMatrix._matrixData[i, column];
                     }
                 }
             });
@@ -221,7 +258,7 @@ public class Matrix
         {
             for (var j = 0; j < ColumnsCount; ++j)
             {
-                builder.Append($" {MatrixData[i, j]}");
+                builder.Append($" {_matrixData[i, j]}");
             }
 
             builder.Append("\n");

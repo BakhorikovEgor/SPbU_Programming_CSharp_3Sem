@@ -3,27 +3,6 @@ namespace MatrixMultiplication.Tests;
 public class MatrixTests
 {
     private const string SavedMatrixPath = "../../../TestData/SavedMatrix.txt";
-    private static bool AreMatricesEqual(Matrix firstMatrix, Matrix secondMatrix)
-    {
-        if (firstMatrix.RowsCount != secondMatrix.RowsCount ||
-            firstMatrix.ColumnsCount != secondMatrix.ColumnsCount)
-        {
-            return false;
-        }
-
-        for (var i = 0; i < firstMatrix.RowsCount; ++i)
-        {
-            for (var j = 0; j < firstMatrix.ColumnsCount; ++j)
-            {
-                if (firstMatrix.MatrixData[i, j] != secondMatrix.MatrixData[i, j])
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 
     private static IEnumerable<TestCaseData> SourceForReadingFromFileTest
     {
@@ -160,13 +139,13 @@ public class MatrixTests
                     { 1 },
                     { -1 }
                 }));
-            yield return new TestCaseData( new Matrix(new int[,] { }));
+            yield return new TestCaseData(new Matrix(new int[,] { }));
         }
     }
-    
+
     [TestCaseSource(nameof(SourceForReadingFromFileTest))]
     public void ReadCorrectMatrixDataFromFile_ShouldCreateCorrectMatrix(string path, Matrix correctMatrix)
-        => Assert.That(AreMatricesEqual(Matrix.ReadMatrixFromFile(path), correctMatrix), Is.True);
+        => Assert.That(Matrix.ReadMatrixFromFile(path) == correctMatrix, Is.True);
 
 
     [TestCase("../../../TestData/NotMatrix.txt")]
@@ -197,7 +176,7 @@ public class MatrixTests
 
     [TestCaseSource(nameof(SourceForCorrectMultiplication))]
     public void MultiplyCorrectMatrices_ShouldReturnCorrectResult(Matrix first, Matrix second, Matrix correctResult)
-        => Assert.That(AreMatricesEqual(first.Multiply(second), correctResult), Is.True);
+        => Assert.That(first.Multiply(second) == correctResult, Is.True);
 
 
     [TestCaseSource(nameof(SourceForIncorrectMultiplication))]
@@ -206,10 +185,11 @@ public class MatrixTests
 
 
     [TestCaseSource(nameof(SourceForCorrectMultiplication))]
-    public void ParallelMultiplyCorrectMatrices_ShouldReturnCorrectResult(Matrix first, Matrix second, Matrix correctResult)
-        => Assert.That(AreMatricesEqual(first.ParallelMultiply(second), correctResult), Is.True);
-    
-    
+    public void ParallelMultiplyCorrectMatrices_ShouldReturnCorrectResult(Matrix first, Matrix second,
+        Matrix correctResult)
+        => Assert.That(first.ParallelMultiply(second) == correctResult, Is.True);
+
+
     [TestCaseSource(nameof(SourceForIncorrectMultiplication))]
     public void ParallelMultiplyIncorrectMatrices_ShouldThrowArgumentException(Matrix first, Matrix second)
         => Assert.Throws<ArgumentException>(() => first.ParallelMultiply(second));
@@ -219,7 +199,6 @@ public class MatrixTests
     public void SaveMatrixToFileAndReadFromFile_ResultMatrixShouldEqualToStarted(Matrix matrix)
     {
         matrix.SaveToFile(SavedMatrixPath);
-        Assert.That(AreMatricesEqual(matrix, Matrix.ReadMatrixFromFile(SavedMatrixPath)), Is.True);
+        Assert.That(matrix == Matrix.ReadMatrixFromFile(SavedMatrixPath), Is.True);
     }
-
 }
