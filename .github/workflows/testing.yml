@@ -13,7 +13,7 @@ jobs:
   test-Windows:  
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2.7.0
+      - uses: actions/checkout@v3
       
       - uses: actions/setup-dotnet@v3
         with:
@@ -31,7 +31,7 @@ jobs:
   test-Ubuntu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.7.0
+      - uses: actions/checkout@v3
       
       - uses: actions/setup-dotnet@v3
         with:
