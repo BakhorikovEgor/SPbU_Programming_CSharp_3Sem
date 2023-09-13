@@ -2,7 +2,7 @@ namespace MatrixMultiplication.Tests;
 
 public class MatrixTests
 {
-    private const string SavedMatrixPath = "../../../TestData/SavedMatrix.txt";
+    private const string SAVED_MATRIX_PATH = "../../../TestData/SavedMatrix.txt";
 
     private static IEnumerable<TestCaseData> SourceForReadingFromFileTest
     {
@@ -198,7 +198,7 @@ public class MatrixTests
     [TestCaseSource(nameof(SourceForSavingMatrices))]
     public void SaveMatrixToFileAndReadFromFile_ResultMatrixShouldEqualToStarted(Matrix matrix)
     {
-        matrix.SaveToFile(SavedMatrixPath);
-        Assert.That(matrix == Matrix.ReadMatrixFromFile(SavedMatrixPath), Is.True);
+        matrix.SaveToFile(SAVED_MATRIX_PATH);
+        Assert.That(matrix == Matrix.ReadMatrixFromFile(SAVED_MATRIX_PATH), Is.True);
     }
 }

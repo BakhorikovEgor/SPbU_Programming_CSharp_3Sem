@@ -74,6 +74,20 @@ public class Matrix
     }
 
 
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != this.GetType()) return false;
+        return this == (Matrix)obj;
+    }
+
+
+    /// <inheritdoc />
+    public override int GetHashCode() => HashCode.Combine(_matrixData, RowsCount, ColumnsCount);
+
+
     /// <summary>
     /// Creates Matrix object using file.
     /// </summary>
