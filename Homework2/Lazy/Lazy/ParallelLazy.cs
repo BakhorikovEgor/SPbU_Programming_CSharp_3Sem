@@ -6,9 +6,8 @@
 /// <typeparam name="T"> <inheritdoc cref="ILazy{T}"/></typeparam>
 public class ParallelLazy<T> : ILazy<T>
 {
-    private Func<T>? _supplier;
     private T? _value;
-
+    private  Func<T>? _supplier;
     private volatile LazyState _state;
 
     /// <summary>
@@ -40,7 +39,7 @@ public class ParallelLazy<T> : ILazy<T>
 
         lock (_supplier)
         {
-            // Reading _state updates _value and _supplier from memory!
+            // Reading _state updates _value from memory!
             // This condition must be first!
             if (_state == LazyState.ReceivedBySupplier)
             {
@@ -48,13 +47,16 @@ public class ParallelLazy<T> : ILazy<T>
             }
 
             _value = _supplier();
-            _supplier = null;
-
-            // Writing _state updates _value and _supplier in memory!
-            // Writing _state should be the last statement!
+            
+            // Writing _state updates _value!
+            // Writing _state should be after writing _value!
+            // Else _value can be null
             _state = LazyState.ReceivedBySupplier;
-
-            return _value;
+            
+            // Should be last because _supplier null check after _state check!
+            _supplier = null;
         }
+
+        return _value;
     }
 }
