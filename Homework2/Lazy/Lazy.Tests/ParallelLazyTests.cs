@@ -2,7 +2,7 @@
 
 public class ParallelLazyTests
 {
-    private const int RestartCount = 5;
+    private const int RestartCount = 1000;
     
     private static readonly int ThreadsCount = Environment.ProcessorCount;
     private static readonly Random Rand = new();
@@ -11,7 +11,7 @@ public class ParallelLazyTests
 
     
     [Test]
-    public void GetBeforeNotNullValueIsSupplied_ShouldSynchronizeOnlyOneThread_OthersReturnCorrectNotNullValue()
+    public void GetBeforeNotNullValueIsSupplied_ShouldCorrectSynchronizeFirstThread_OthersReturnCorrectNotNullValue()
     {
         for (var i = 0; i < RestartCount; ++i)
         {

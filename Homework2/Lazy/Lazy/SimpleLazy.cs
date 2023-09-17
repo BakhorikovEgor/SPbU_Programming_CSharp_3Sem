@@ -46,13 +46,13 @@ public class SimpleLazy<T> : ILazy<T>
             _value = _supplier();
             _valueReceived = true;
             _supplier = null;
+            
+            return _value;
         }
         catch (Exception e)
         {
             _supplierException = e;
-            throw _supplierException;
+            throw;
         }
-
-        return _value;
     }
 }

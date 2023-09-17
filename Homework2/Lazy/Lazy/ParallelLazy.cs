@@ -67,15 +67,15 @@ public class ParallelLazy<T> : ILazy<T>
                 
                 // Should be last because _supplier null check after _state check!
                 _supplier = null;
+                
+                return _value;
             }
             catch (Exception e)
             {
                 _supplierException = e;
-                throw _supplierException;
+                throw;
             }
         }
-        
-        return _value;
     }
     
 }
