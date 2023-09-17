@@ -7,8 +7,10 @@
 public class ParallelLazy<T> : ILazy<T>
 {
     private T? _value;
-    private  Func<T>? _supplier;
-    private volatile LazyState _state;
+    private Func<T>? _supplier;
+    private Exception? _supplierException;
+    
+    private volatile bool _valueReceived;
 
     /// <summary>
     /// Standard lazy object constructor.
@@ -17,19 +19,25 @@ public class ParallelLazy<T> : ILazy<T>
     public ParallelLazy(Func<T> supplier)
     {
         _supplier = supplier;
-        _state = LazyState.NotReceived;
+        _valueReceived = false;
     }
 
 
     /// <inheritdoc cref="ILazy{T}.Get"/>
     /// <exception cref="InvalidOperationException"> Supplier can not be null. </exception>
+    /// <exception cref="Exception"> Exception got from supplier. </exception>
     public T? Get()
     {
-        // Reading _state updates _value and _supplier from memory!
+        // Reading _valueReceived updates _value from memory!
         // This condition must be first!
-        if (_state != LazyState.NotReceived)
+        if (_valueReceived)
         {
             return _value;
+        }
+
+        if (_supplierException != null)
+        {
+            throw _supplierException;
         }
 
         if (_supplier == null)
@@ -39,24 +47,35 @@ public class ParallelLazy<T> : ILazy<T>
 
         lock (_supplier)
         {
-            // Reading _state updates _value from memory!
-            // This condition must be first!
-            if (_state == LazyState.ReceivedBySupplier)
+            if (_valueReceived)
             {
                 return _value;
             }
+            
+            if (_supplierException != null)
+            {
+                throw _supplierException;
+            }
 
-            _value = _supplier();
-            
-            // Writing _state updates _value!
-            // Writing _state should be after writing _value!
-            // Else _value can be null
-            _state = LazyState.ReceivedBySupplier;
-            
-            // Should be last because _supplier null check after _state check!
-            _supplier = null;
+            try
+            {
+                _value = _supplier();
+                
+                // Writing _valueReceived updates _value!
+                // Writing _state should be after writing _value, else _value can be null
+                _valueReceived = true;
+                
+                // Should be last because _supplier null check after _state check!
+                _supplier = null;
+            }
+            catch (Exception e)
+            {
+                _supplierException = e;
+                throw _supplierException;
+            }
         }
-
+        
         return _value;
     }
+    
 }

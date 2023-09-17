@@ -1,6 +1,5 @@
 ﻿namespace Lazy;
 
-
 /// <summary>
 /// Implementation of the ILazy interface for single-threaded use.
 /// </summary>
@@ -9,7 +8,8 @@ public class SimpleLazy<T> : ILazy<T>
 {
     private Func<T>? _supplier;
     private T? _value;
-    private LazyState _state;
+    private Exception? _supplierException;
+    private bool _valueReceived;
 
     /// <summary>
     /// Standard lazy object constructor.
@@ -18,16 +18,22 @@ public class SimpleLazy<T> : ILazy<T>
     public SimpleLazy(Func<T> supplier)
     {
         _supplier = supplier;
-        _state = LazyState.NotReceived;
+        _valueReceived = false;
     }
 
     /// <inheritdoc cref="ILazy{T}.Get"/>
     /// <exception cref="InvalidOperationException"> Supplier can not be null. </exception>
+    /// <exception cref="Exception"> Exception got from supplier. </exception>
     public T? Get()
     {
-        if (_state != LazyState.NotReceived)
+        if (_valueReceived)
         {
             return _value;
+        }
+
+        if (_supplierException != null)
+        {
+            throw _supplierException;
         }
 
         if (_supplier == null)
@@ -35,9 +41,17 @@ public class SimpleLazy<T> : ILazy<T>
             throw new InvalidOperationException("Null supplier is not allowed.");
         }
 
-        _value = _supplier();
-        _supplier = null;
-        _state = LazyState.ReceivedBySupplier;
+        try
+        {
+            _value = _supplier();
+            _valueReceived = true;
+            _supplier = null;
+        }
+        catch (Exception e)
+        {
+            _supplierException = e;
+            throw _supplierException;
+        }
 
         return _value;
     }
