@@ -8,6 +8,8 @@ namespace MatrixMultiplication;
 /// </summary>
 public class Matrix
 {
+    private const int GeneratedMatrixMaxValue = 100;
+    
     private static readonly Random Rand = new Random();
 
     private readonly int[,] _matrixData;
@@ -69,9 +71,7 @@ public class Matrix
     /// Checks if matrices are not equal
     /// </summary>
     public static bool operator !=(Matrix firstMatrix, Matrix secondMatrix)
-    {
-        return !(firstMatrix == secondMatrix);
-    }
+        => !(firstMatrix == secondMatrix);
 
 
     /// <inheritdoc />
@@ -85,7 +85,8 @@ public class Matrix
 
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(_matrixData, RowsCount, ColumnsCount);
+    public override int GetHashCode() 
+        => HashCode.Combine(_matrixData, RowsCount, ColumnsCount);
 
 
     /// <summary>
@@ -151,7 +152,7 @@ public class Matrix
         {
             for (var j = 0; j < columns; ++j)
             {
-                newMatrixData[i, j] = Rand.Next(-100, 101);
+                newMatrixData[i, j] = Rand.Next(-GeneratedMatrixMaxValue, GeneratedMatrixMaxValue + 1);
             }
         }
 
@@ -281,5 +282,6 @@ public class Matrix
         return builder.ToString();
     }
 
-    private bool MultiplicationMatching(Matrix secondMatrix) => ColumnsCount == secondMatrix.RowsCount;
+    private bool MultiplicationMatching(Matrix secondMatrix)
+        => ColumnsCount == secondMatrix.RowsCount;
 }
