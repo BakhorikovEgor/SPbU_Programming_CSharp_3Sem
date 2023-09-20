@@ -1,8 +1,6 @@
-﻿using static System.Console;
-using Aspose.Pdf;
-using MatrixMultiplication;
+﻿using MatrixMultiplication;
+using static System.Console;
 using Matrix = MatrixMultiplication.Matrix;
-
 
 
 ForegroundColor = ConsoleColor.Green;
@@ -35,46 +33,17 @@ if (args.Length == 1)
     if (args[0] == "-reports")
     {
         WriteLine("Evaluating....");
-        var reports = ReportsCreator.CreateReports();
-
-        var document = new Document();
-        var table = new Table();
-
-        var page = document.Pages.Add();
-        page.Paragraphs.Add(table);
-
-        table.Border = new Aspose.Pdf.BorderInfo(Aspose.Pdf.BorderSide.All, .5f,
-            Aspose.Pdf.Color.FromRgb(System.Drawing.Color.LightGray));
-        table.DefaultCellBorder = new Aspose.Pdf.BorderInfo(Aspose.Pdf.BorderSide.All, .5f,
-            Aspose.Pdf.Color.FromRgb(System.Drawing.Color.LightGray));
-
-        var mainRow = table.Rows.Add();
-        mainRow.Cells.Add("First matrix sizes");
-        mainRow.Cells.Add("Second matrix sizes");
-        mainRow.Cells.Add("Math expectation (milliseс) (sequentially/parallel) ");
-        mainRow.Cells.Add("Standard Deviation (milliseс) (sequentially/parallel)");
-
-        foreach (var report in reports)
-        {
-            var row = table.Rows.Add();
-            row.Cells.Add($"{report.FirstMatrixRows} \u00d7 {report.FirstMatrixColumns}");
-            row.Cells.Add($"{report.SecondMatrixRows} \u00d7 {report.SecondMatrixColumns}");
-            row.Cells.Add($"{Math.Round(report.MathExpectation, 2, MidpointRounding.AwayFromZero)} / " +
-                          $"{Math.Round(report.ParallelMathExpectation, 2, MidpointRounding.AwayFromZero)}");
-            row.Cells.Add($"{Math.Round(report.StandardDeviation, 2, MidpointRounding.AwayFromZero)} / " +
-                          $"{Math.Round(report.ParallelStandardDeviation, 2, MidpointRounding.AwayFromZero)}");
-        }
-
+        var reports = ReportsHandler.CreateReports();
         try
         {
-            document.Save("Reports.pdf");
+            ReportsHandler.SaveReportsToFile(reports, "Reports.pdf");
             WriteLine("Done !");
             WriteLine("Check Reports.pdf file.");
         }
-        catch (IOException)
+        catch (IOException e)
         {
             WriteLine("Failed.");
-            WriteLine("File Reports.pdf in use");
+            WriteLine(e.Message);
         }
     }
     else

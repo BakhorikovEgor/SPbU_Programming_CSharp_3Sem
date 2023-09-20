@@ -8,8 +8,8 @@ namespace MatrixMultiplication;
 /// </summary>
 public class Matrix
 {
-    private const int GeneratedMatrixMaxValue = 100;
-    
+    private const int GeneratedMatrixMaxCellValue = 100;
+
     private static readonly Random Rand = new Random();
 
     private readonly int[,] _matrixData;
@@ -17,23 +17,18 @@ public class Matrix
     /// <summary>
     /// Number of rows.
     /// </summary>
-    public int RowsCount { get; }
+    public int RowsCount => _matrixData.GetLength(0);
 
     /// <summary>
     /// Number of columns.
     /// </summary>
-    public int ColumnsCount { get; }
+    public int ColumnsCount => _matrixData.GetLength(1);
 
     /// <summary>
     /// Standard constructor of Matrix.
     /// </summary>
     /// <param name="data"> Matrix elements. </param>
-    public Matrix(int[,] data)
-    {
-        _matrixData = (int[,])data.Clone();
-        RowsCount = data.GetLength(0);
-        ColumnsCount = data.GetLength(1);
-    }
+    public Matrix(int[,] data) => _matrixData = (int[,])data.Clone();
 
 
     /// <summary>
@@ -72,21 +67,6 @@ public class Matrix
     /// </summary>
     public static bool operator !=(Matrix firstMatrix, Matrix secondMatrix)
         => !(firstMatrix == secondMatrix);
-
-
-    /// <inheritdoc />
-    public override bool Equals(object? obj)
-    {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != this.GetType()) return false;
-        return this == (Matrix)obj;
-    }
-
-
-    /// <inheritdoc />
-    public override int GetHashCode() 
-        => HashCode.Combine(_matrixData, RowsCount, ColumnsCount);
 
 
     /// <summary>
@@ -152,7 +132,7 @@ public class Matrix
         {
             for (var j = 0; j < columns; ++j)
             {
-                newMatrixData[i, j] = Rand.Next(-GeneratedMatrixMaxValue, GeneratedMatrixMaxValue + 1);
+                newMatrixData[i, j] = Rand.Next(-GeneratedMatrixMaxCellValue, GeneratedMatrixMaxCellValue + 1);
             }
         }
 
@@ -276,11 +256,26 @@ public class Matrix
                 builder.Append($" {_matrixData[i, j]}");
             }
 
-            builder.Append("\n");
+            builder.Append('\n');
         }
 
         return builder.ToString();
     }
+
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != this.GetType()) return false;
+        return this == (Matrix)obj;
+    }
+
+
+    /// <inheritdoc />
+    public override int GetHashCode() => HashCode.Combine(_matrixData, RowsCount, ColumnsCount);
+
 
     private bool MultiplicationMatching(Matrix secondMatrix)
         => ColumnsCount == secondMatrix.RowsCount;
