@@ -160,10 +160,8 @@ public class Matrix
         {
             for (var j = 0; j < secondMatrix.ColumnsCount; ++j)
             {
-                for (var k = 0; k < ColumnsCount; ++k)
-                {
-                    newMatrixData[i, j] += _matrixData[i, k] * secondMatrix._matrixData[k, j];
-                }
+                newMatrixData[i, j] = Enumerable.Range(0, ColumnsCount)
+                    .Sum(k => this[i, k] * secondMatrix[k, j]);
             }
         }
 
@@ -184,37 +182,34 @@ public class Matrix
             throw new ArgumentException("The dimensions of the matrices are not suitable for multiplying them");
         }
 
-        var newMatrixItemsCount = RowsCount * secondMatrix.ColumnsCount;
+        if (RowsCount == 0)
+        {
+            return this;
+        }
+        
         var newMatrixData = new int[RowsCount, secondMatrix.ColumnsCount];
 
-        var threadsCount = Environment.ProcessorCount;
+        var threadsCount = Math.Min(Environment.ProcessorCount, RowsCount);
         var threads = new Thread[threadsCount];
 
-        var itemsForThread = newMatrixItemsCount / threadsCount;
-        var remainder = newMatrixItemsCount % threadsCount;
+        var rowsPerThread = (RowsCount / threadsCount) + 1;
 
         for (var threadNumber = 0; threadNumber < threadsCount; ++threadNumber)
         {
             var nestedThreadNumber = threadNumber;
             threads[threadNumber] = new Thread(() =>
             {
-                var startedItemNumber = nestedThreadNumber * itemsForThread +
-                                        (nestedThreadNumber < remainder
-                                            ? nestedThreadNumber
-                                            : remainder);
-                var lastItemNumber = startedItemNumber + itemsForThread +
-                                     (nestedThreadNumber < remainder
-                                         ? 1
-                                         : 0);
-
-                for (var itemNumber = startedItemNumber; itemNumber < lastItemNumber; ++itemNumber)
+                for (var rowNumber = nestedThreadNumber * rowsPerThread;
+                     rowNumber < (nestedThreadNumber + 1) * rowsPerThread && rowNumber < RowsCount;
+                     ++rowNumber)
                 {
-                    var row = itemNumber / secondMatrix.ColumnsCount;
-                    var column = itemNumber % secondMatrix.ColumnsCount;
-
-                    for (var i = 0; i < ColumnsCount; ++i)
+                    for (var columnNumber = 0; columnNumber < secondMatrix.ColumnsCount; ++columnNumber)
                     {
-                        newMatrixData[row, column] += _matrixData[row, i] * secondMatrix._matrixData[i, column];
+                        var nestedRow = rowNumber;
+                        var nestedColumn = columnNumber;
+                        
+                        newMatrixData[nestedRow, nestedColumn] = Enumerable.Range(0, ColumnsCount)
+                            .Sum(k => this[nestedRow, k] * secondMatrix[k, nestedColumn]);
                     }
                 }
             });
