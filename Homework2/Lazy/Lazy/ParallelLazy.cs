@@ -10,6 +10,8 @@ public class ParallelLazy<T> : ILazy<T>
     private Func<T>? _supplier;
     private Exception? _supplierException;
     
+    private readonly object _locker = new();
+    
     private volatile bool _valueReceived;
 
     /// <summary>
@@ -45,7 +47,7 @@ public class ParallelLazy<T> : ILazy<T>
             throw new InvalidOperationException("Null supplier is not allowed.");
         }
 
-        lock (_supplier)
+        lock (_locker)
         {
             if (_valueReceived)
             {

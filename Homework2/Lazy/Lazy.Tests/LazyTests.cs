@@ -3,7 +3,9 @@ namespace Lazy.Tests;
 public class LazyTests
 {
     private static readonly Random Rand = new();
-
+    
+    private static int _counter = 0;
+    
     private static IEnumerable<TestCaseData> LazyImplementationsStandardSupplier
     {
         get
@@ -30,6 +32,24 @@ public class LazyTests
             yield return new TestCaseData(new ParallelLazy<object?>(() => throw new Exception()));
         }
     }
+    
+    private static IEnumerable<TestCaseData> LazyImplementationChangingCounter
+    {
+        get
+        {
+            yield return new TestCaseData(new SimpleLazy<object?>(() =>
+            {
+                _counter++;
+                return new object();
+            }));
+            yield return new TestCaseData(new ParallelLazy<object?>(() =>
+            {
+                _counter++;
+                return new object();
+            }));
+        }
+    }
+
 
     [TestCaseSource(nameof(LazyImplementationsStandardSupplier))]
     public void GetWithNotNullSupplier_ShouldReturnTheSameValueEveryTime(ILazy<int> lazy)
@@ -54,5 +74,16 @@ public class LazyTests
     [TestCaseSource(nameof(LazyImplementationsExceptionThrowingSupplier))]
     public void GetWithExceptionThrowingSupplier_ShouldThrowException(ILazy<object> lazy)
         => Assert.Throws<Exception>(() => lazy.Get());
+
+    
+    [TestCaseSource(nameof(LazyImplementationChangingCounter))]
+    public void GetTwice_ShouldUseSupplierOnce(ILazy<object> lazy)
+    {
+        _counter = 0;
+        lazy.Get();
+        lazy.Get();
+        
+        Assert.That(_counter, Is.EqualTo(1));
+    }
 
 }

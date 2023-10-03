@@ -11,7 +11,7 @@ public class ParallelLazyTests
 
     
     [Test]
-    public void GetBeforeNotNullValueIsSupplied_ShouldCorrectSynchronizeFirstThread_OthersReturnCorrectNotNullValue()
+    public void RaceCondition_FirstLazyUsage()
     {
         for (var i = 0; i < RestartCount; ++i)
         {
