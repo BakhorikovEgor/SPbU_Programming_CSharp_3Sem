@@ -1,4 +1,4 @@
-﻿namespace MyThreadPool;
+﻿namespace ThreadPool;
 
 public class MyTask<TResult> : IMyTask<TResult>
 {
@@ -59,9 +59,9 @@ public class MyTask<TResult> : IMyTask<TResult>
     }
     
     
-    private void Compute()
+    internal void Compute()
     {
-        if (_isCompleted || _mainFuncException == null)
+        if (_isCompleted)
         {
             return;
         }
@@ -74,7 +74,7 @@ public class MyTask<TResult> : IMyTask<TResult>
         
         _computingEvent.WaitOne();
 
-        if (_isCompleted || _mainFuncException == null)
+        if (_isCompleted)
         {
             return;
         }
@@ -82,8 +82,8 @@ public class MyTask<TResult> : IMyTask<TResult>
         try
         {
             _result = _mainFunc();
-            _mainFunc = null;
             _isCompleted = true;
+            _mainFunc = null;
 
             _resultEvent.Set();
             SubmitDelayedContinuations();
@@ -92,11 +92,15 @@ public class MyTask<TResult> : IMyTask<TResult>
         {
             _mainFuncException = e;
         }
+        finally
+        {
+            _isCompleted = true;
+        }
 
         _computingEvent.Set();
     }
 
 
     private void SubmitDelayedContinuations()
-        => _delayedContinuations.ForEach(c => _threadPool.SubmitContinuation(c));
+        => _delayedContinuations.ForEach(c => _threadPool.Submit(c));
 }
