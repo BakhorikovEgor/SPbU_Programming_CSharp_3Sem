@@ -12,7 +12,7 @@ public class ParallelLazy<T> : ILazy<T>
     
     private readonly object _locker = new();
     
-    private volatile bool _valueReceived;
+    private volatile bool _isValueReceived;
 
     /// <summary>
     /// Standard lazy object constructor.
@@ -21,7 +21,7 @@ public class ParallelLazy<T> : ILazy<T>
     public ParallelLazy(Func<T> supplier)
     {
         _supplier = supplier;
-        _valueReceived = false;
+        _isValueReceived = false;
     }
 
 
@@ -30,9 +30,7 @@ public class ParallelLazy<T> : ILazy<T>
     /// <exception cref="Exception"> Exception got from supplier. </exception>
     public T? Get()
     {
-        // Reading _valueReceived updates _value from memory!
-        // This condition must be first!
-        if (_valueReceived)
+        if (_isValueReceived)
         {
             return _value;
         }
@@ -49,7 +47,7 @@ public class ParallelLazy<T> : ILazy<T>
 
         lock (_locker)
         {
-            if (_valueReceived)
+            if (_isValueReceived)
             {
                 return _value;
             }
@@ -63,11 +61,8 @@ public class ParallelLazy<T> : ILazy<T>
             {
                 _value = _supplier();
                 
-                // Writing _valueReceived updates _value!
-                // Writing _state should be after writing _value, else _value can be null
-                _valueReceived = true;
+                _isValueReceived = true;
                 
-                // Should be last because _supplier null check after _state check!
                 _supplier = null;
                 
                 return _value;

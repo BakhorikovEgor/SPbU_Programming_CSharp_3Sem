@@ -4,7 +4,7 @@ public class LazyTests
 {
     private static readonly Random Rand = new();
     
-    private static int _counter = 0;
+    private static int _counter;
     
     private static IEnumerable<TestCaseData> LazyImplementationsStandardSupplier
     {

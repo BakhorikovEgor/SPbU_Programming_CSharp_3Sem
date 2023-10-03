@@ -9,7 +9,7 @@ public class SimpleLazy<T> : ILazy<T>
     private Func<T>? _supplier;
     private T? _value;
     private Exception? _supplierException;
-    private bool _valueReceived;
+    private bool _isValueReceived;
 
     /// <summary>
     /// Standard lazy object constructor.
@@ -18,7 +18,7 @@ public class SimpleLazy<T> : ILazy<T>
     public SimpleLazy(Func<T> supplier)
     {
         _supplier = supplier;
-        _valueReceived = false;
+        _isValueReceived = false;
     }
 
     /// <inheritdoc cref="ILazy{T}.Get"/>
@@ -26,7 +26,7 @@ public class SimpleLazy<T> : ILazy<T>
     /// <exception cref="Exception"> Exception got from supplier. </exception>
     public T? Get()
     {
-        if (_valueReceived)
+        if (_isValueReceived)
         {
             return _value;
         }
@@ -44,7 +44,7 @@ public class SimpleLazy<T> : ILazy<T>
         try
         {
             _value = _supplier();
-            _valueReceived = true;
+            _isValueReceived = true;
             _supplier = null;
             
             return _value;
