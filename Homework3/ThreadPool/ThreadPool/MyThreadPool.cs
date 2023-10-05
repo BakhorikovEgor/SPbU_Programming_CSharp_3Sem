@@ -2,6 +2,7 @@
 
 /// <summary>
 /// Represents a custom thread pool for managing and executing asynchronous tasks.
+/// Threadpool threads only work when there are tasks.
 /// </summary>
 public class MyThreadPool : IDisposable
 {
@@ -12,14 +13,20 @@ public class MyThreadPool : IDisposable
     private readonly ManualResetEvent _threadWakeUpAfterCancelEvent;
     private readonly WaitHandle[] _threadWakeUpHandlers;
     private readonly CancellationTokenSource _tokenSource;
-
+    
 
     /// <summary>
     /// Initializes a new instance of the MyThreadPool class with the specified number of worker threads.
     /// </summary>
     /// <param name="count">The number of worker threads to create in the thread pool.</param>
+    /// <exception cref="ArgumentException"> Not positive number of threads </exception>
     public MyThreadPool(int count)
     {
+        if (count < 1)
+        {
+            throw new ArgumentException("Thread pool must have at least 1 thread");
+        }
+        
         _tasks = new Queue<Action>();
         _threads = new MyThreadPoolThread[count];
         _tokenSource = new CancellationTokenSource();
@@ -35,13 +42,15 @@ public class MyThreadPool : IDisposable
         InitThreads();
     }
 
-
-    // <summary>
-    /// Submits a new asynchronous task to the thread pool and returns an IMyTask<TResult> representing the task.
-    /// </summary>
+    
+    /// <summary>
+    /// Submits a new asynchronous task to the thread pool and returns an IMyTask&lt;TResult&gt; representing the task.
+    /// Already submitted tasks and their continuations will be completed.
+    /// </summary> 
     /// <typeparam name="TResult">The type of the result produced by the task.</typeparam>
     /// <param name="func">The function to be executed asynchronously.</param>
-    /// <returns>An IMyTask<TResult> representing the submitted task.</returns>
+    /// <returns> An IMyTask&lt;TResult&gt; representing the submitted task. </returns>
+    /// <exception cref="InvalidOperationException"> Thread pool stopped. </exception>
     public IMyTask<TResult> Submit<TResult>(Func<TResult> func)
     {
         if (_tokenSource.Token.IsCancellationRequested)
@@ -78,17 +87,32 @@ public class MyThreadPool : IDisposable
         }
     }
 
-    
+
     /// <inheritdoc cref="IDisposable.Dispose"/>
     public void Dispose()
     {
+        ShutDown();
         _accessToTasksEvent.Dispose();
         _threadWakeUpBeforeCancelEvent.Dispose();
         _threadWakeUpAfterCancelEvent.Dispose();
-        _tokenSource.Dispose();
-        ShutDown();
     }
 
+
+    /// <summary>
+    /// How many threads can work in thread pool.
+    /// </summary>
+    public int GetNumberOfAbleThreads()
+        => _tokenSource.Token.IsCancellationRequested 
+           ? 0 
+           : _threads.Length;
+
+
+    /// <summary>
+    /// How many threads are working now
+    /// </summary>
+    public int GetNumberOfWorkingThreads()
+        => _threads.Count(thread => thread.IsWorking);
+    
 
     private void Submit(Action func)
     {
@@ -106,20 +130,22 @@ public class MyThreadPool : IDisposable
             _threads[i] = new MyThreadPoolThread(this);
         }
     }
-    
+
 
     private class MyThreadPoolThread
     {
         private readonly MyThreadPool _threadPool;
-        
-        internal bool IsDone { get; private set; }
+
+        public bool IsDone { get; private set; }
+        public bool IsWorking { get; private set; }
 
 
-        internal MyThreadPoolThread(MyThreadPool threadPool)
+        public MyThreadPoolThread(MyThreadPool threadPool)
         {
             _threadPool = threadPool;
 
             IsDone = false;
+            IsWorking = false;
             
             var thread = new Thread(Start);
             thread.Start();
@@ -128,6 +154,7 @@ public class MyThreadPool : IDisposable
 
         private void Start()
         {
+            WaitHandle.WaitAny(_threadPool._threadWakeUpHandlers);
             while (true)
             {
                 _threadPool._accessToTasksEvent.WaitOne();
@@ -144,7 +171,9 @@ public class MyThreadPool : IDisposable
                 else
                 {
                     _threadPool._accessToTasksEvent.Set();
+                    IsWorking = false;
                     WaitHandle.WaitAny(_threadPool._threadWakeUpHandlers);
+                    IsWorking = true;
                 }
             }
 
@@ -161,7 +190,8 @@ public class MyThreadPool : IDisposable
         private Func<TResult>? _mainFunc;
         private Exception? _mainFuncException;
         private TResult? _result;
-        private bool _isCompleted;
+
+        private volatile bool _isCompleted;
 
 
         public bool IsCompleted => _isCompleted;
@@ -182,7 +212,7 @@ public class MyThreadPool : IDisposable
         }
 
 
-        internal MyTask(MyThreadPool threadPool, Func<TResult> func)
+        public MyTask(MyThreadPool threadPool, Func<TResult> func)
         {
             _threadPool = threadPool;
             _mainFunc = func;
@@ -196,6 +226,11 @@ public class MyThreadPool : IDisposable
 
         public IMyTask<TNewResult> ContinueWith<TNewResult>(Func<TResult?, TNewResult> func)
         {
+            if (_threadPool._tokenSource.Token.IsCancellationRequested)
+            {
+                throw new InvalidOperationException("Thread pool was shut down");
+            }
+            
             if (_isCompleted)
             {
                 return _threadPool.Submit(() => func(Result));
@@ -208,7 +243,7 @@ public class MyThreadPool : IDisposable
         }
 
 
-        internal void Compute()
+        public void Compute()
         {
             if (_mainFunc == null)
             {
