@@ -148,6 +148,8 @@ public class MyThreadPool : IDisposable
             IsWorking = false;
             
             var thread = new Thread(Start);
+
+            thread.IsBackground = true;
             thread.Start();
         }
 
