@@ -1,4 +1,6 @@
-﻿namespace ThreadPoolTests;
+﻿using System.Diagnostics;
+
+namespace ThreadPoolTests;
 
 public class MyTaskTests
 {
@@ -43,23 +45,33 @@ public class MyTaskTests
             var temp = task.Result;
         });
     }
-
-
+    
+    
     [Test]
-    public void Continuation_NotBlockMainThread()
+    public void ContinueWith_ShouldNotBlockMainThread()
     {
         using var pool = new MyThreadPool(Environment.ProcessorCount);
 
-        var task = pool.Submit(() =>
+        bool flag = false;
+        
+        var firstTask = pool.Submit(() =>
         {
-            Thread.Sleep(1000);
-            return 2 + 2;
+            Thread.Sleep(10000);
+            return 0;
         });
 
-        var continuation = task.ContinueWith((result) => 2 + 2);
-
-        Assert.That(continuation.IsCompleted, Is.False);
+        var continuationTask = firstTask.ContinueWith(result =>
+        {
+            Volatile.Write(ref flag, true);
+            return result + 1;
+        });
+        
+        
+        Assert.IsFalse(Volatile.Read(ref flag), "Main thread was blocked by ContinueWith.");
+        
+        pool.ShutDown();
     }
+    
     
     [Test]
     public void Continuation_ShouldStartAfterParentTask()
