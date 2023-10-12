@@ -46,6 +46,22 @@ public class MyTaskTests
 
 
     [Test]
+    public void Continuation_NotBlockMainThread()
+    {
+        using var pool = new MyThreadPool(Environment.ProcessorCount);
+
+        var task = pool.Submit(() =>
+        {
+            Thread.Sleep(1000);
+            return 2 + 2;
+        });
+
+        var continuation = task.ContinueWith((result) => 2 + 2);
+
+        Assert.That(continuation.IsCompleted, Is.False);
+    }
+    
+    [Test]
     public void Continuation_ShouldStartAfterParentTask()
     {
         using var pool = new MyThreadPool(Environment.ProcessorCount);
