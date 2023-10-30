@@ -1,4 +1,4 @@
-﻿namespace SimpleFTP.Exceptions;
+﻿namespace FTP_Server.Exceptions;
 
 public class FtpServerAlreadyStartedException : Exception
 {

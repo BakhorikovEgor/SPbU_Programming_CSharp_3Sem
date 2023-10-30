@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace SimpleFTP.Utils;
+namespace FTP_Server.Utils;
 
 public static class RequestHandlers
 {
@@ -19,7 +19,7 @@ public static class RequestHandlers
 
         foreach (var innerPath in innerPaths)
         {
-            builder.Append($" {Path.GetFileName(path)} {Directory.Exists(path)}");
+            builder.Append($" {Path.GetFileName(innerPath)} {Directory.Exists(innerPath)}");
         }
 
         builder.Append('\n');
@@ -41,9 +41,8 @@ public static class RequestHandlers
 
     public static async Task SendStringAsync(string message, Stream stream)
     {
-        await using var writer = new StreamWriter(stream);
-        await writer.WriteAsync(message);
-        await writer.FlushAsync();
+        await stream.WriteAsync(Encoding.UTF8.GetBytes(message));
+        await stream.FlushAsync();
     }
 
     public static async Task SendBytesAsync(byte[] bytes, Stream stream)
