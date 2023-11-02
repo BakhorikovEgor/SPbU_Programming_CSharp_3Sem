@@ -37,7 +37,6 @@ while (true)
         var endPoint = new IPEndPoint(IPAddress.Parse(lineArgs[2]), int.Parse(lineArgs[3]));
         var client = new FtpClient(new IPEndPoint(IPAddress.Loopback, 9000));
 
-        await client.HandleRequestAsync($"{lineArgs[0]} {lineArgs[1]}", endPoint);
     }
     catch
     {

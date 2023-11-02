@@ -50,6 +50,8 @@ public class FtpServer
             }
 
             await Task.WhenAll(tasks);
+
+            Console.WriteLine("Server stopped");
         }
         finally
         {
@@ -73,28 +75,37 @@ public class FtpServer
         try
         {
             var stream = client.GetStream();
-            var buffer = new byte[BufferSize];
-            var bytes = await stream.ReadAsync(buffer);
-            var request = Encoding.UTF8.GetString(buffer, 0, bytes);
-            var requestParts = request.Split();
 
-            if (requestParts.Length < 2)
+            while (client.Connected || !_source.IsCancellationRequested)
             {
-                await RequestHandlers.SendStringAsync("No such request.", stream);
-                return;
-            }
+                var buffer = new byte[BufferSize];
+                var builder = new StringBuilder();
+                int bytesCount;
+                do
+                {
+                    bytesCount = await stream.ReadAsync(buffer);
+                    builder.Append(Encoding.UTF8.GetString(buffer, 0, bytesCount));
+                } while (buffer[bytesCount - 1] != '\n');
 
-            switch (requestParts[0])
-            {
-                case "1":
-                    await RequestHandlers.ListFilesAsync(requestParts[1], stream);
-                    break;
-                case "2":
-                    await RequestHandlers.GetFileAsync(requestParts[1], stream);
-                    break;
-                default:
+                var requestParts = builder.ToString().Split();
+                if (requestParts.Length < 2)
+                {
                     await RequestHandlers.SendStringAsync("No such request.", stream);
-                    break;
+                    return;
+                }
+
+                switch (requestParts[0])
+                {
+                    case "1":
+                        await RequestHandlers.ListFilesAsync(requestParts[1], stream);
+                        break;
+                    case "2":
+                        await RequestHandlers.GetFileAsync(requestParts[1], stream);
+                        break;
+                    default:
+                        await RequestHandlers.SendStringAsync("No such request.", stream);
+                        break;
+                }
             }
         }
         finally
@@ -102,7 +113,6 @@ public class FtpServer
             client.Dispose();
             Console.WriteLine($"\n Disconnect client \n Ip: {clientEndPoint.Address} Port: {clientEndPoint.Port}");
         }
-        
     }
 
     private void _reset()

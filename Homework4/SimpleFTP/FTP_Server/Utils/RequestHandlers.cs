@@ -35,7 +35,7 @@ public static class RequestHandlers
         }
 
         var bytes = await File.ReadAllBytesAsync(path);
-        await SendStringAsync(bytes.Length.ToString(), stream);
+        await SendStringAsync(bytes.Length.ToString() + ' ', stream);
         await SendBytesAsync(bytes, stream);
     }
 
