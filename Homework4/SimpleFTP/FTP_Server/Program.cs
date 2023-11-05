@@ -1,29 +1,53 @@
 ﻿using System.Net;
 using FTP_Server.Server;
 
-if (args.Length == 1 && Directory.Exists(args[0]))
-{
-    Directory.SetCurrentDirectory(args[0]);
-    
-    var endPoint = new IPEndPoint(IPAddress.Loopback, 8888);
-    var server = new FtpServer(endPoint);
-    await server.StartAsync();
+const string exitMessage = "Exit";
+const string showHelpMessage = "Help";
+const string helpMessage = $"""
 
+                            Hello, I`m server :)
+                            --------------------------------------------
+                            I can handle two types of requests:
+
+                            1) 1 <string directory_path> - Listing
+                            2) 2 <string file_path> - Getting
+                            --------------------------------------------
+                            How to start me:
+
+                            dotnet run <string ip> <int port>
+                            --------------------------------------------
+
+                            Also:
+
+                            {exitMessage} - exit command.
+                            {showHelpMessage} - show help message.
+                            """;
+
+if (args.Length != 3 || !Directory.Exists(args[0]) || !IPAddress.TryParse(args[1], out var ip)
+    || !int.TryParse(args[2], out var port))
+{
+    Console.WriteLine(helpMessage);
     return;
 }
 
-Console.WriteLine("""
-                  
-                  Hello, I`m server :)
-                  --------------------------------------------
-                  I can handle two types of requests:
-                  
-                  1) 1 <string directory_path> - Listing 
-                  2) 2 <string file_path> - Getting
-                  --------------------------------------------
-                  How to start me:
-                  
-                  dotnet run <string directory_path>
-                  
-                  (directory_path - path to base directory)
-                  """);
+var endPoint = new IPEndPoint(ip, port);
+var server = new FtpServer(endPoint);
+
+server.StartAsync();
+
+while (true)
+{
+    var line = Console.ReadLine();
+
+    if (line == exitMessage)
+    {
+        server.Stop();
+        break;
+    }
+
+    if (line == showHelpMessage)
+    {
+        Console.WriteLine(helpMessage);
+    }
+}
+

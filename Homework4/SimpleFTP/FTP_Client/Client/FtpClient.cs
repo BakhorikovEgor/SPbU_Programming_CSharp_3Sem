@@ -1,66 +1,60 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using System.Text;
+using Protocol;
 
 namespace FTP_Client.Client;
 
+/// <summary>
+/// The FtpClient class represents an FTP client for interacting with an FTP server.
+/// </summary>
 public class FtpClient : IDisposable
 {
     private readonly TcpClient _client;
-    private readonly NetworkStream _stream;
-    private readonly Semaphore _semaphore = new Semaphore(1, 1);
+    private readonly Semaphore _semaphore = new(1, 1);
 
     private const int BufferSize = 512;
+    private const int LongSizeBuffer = 8;
 
+    /// <summary>
+    /// Initializes a new instance of the FtpClient class based on an existing TcpClient.
+    /// </summary>
+    /// <param name="client">A TcpClient representing the connection to the FTP server.</param>
+    private FtpClient(TcpClient client)
+        => _client = client;
 
-    public enum RequestType
+    /// <summary>
+    /// Asynchronously creates a new instance of the FtpClient class and connects to a remote FTP server.
+    /// </summary>
+    /// <param name="remoteEndPoint">An IPEndPoint representing the remote FTP server.</param>
+    /// <returns>An instance of FtpClient connected to the remote FTP server.</returns>
+    public static async Task<FtpClient> CreateAsync(IPEndPoint remoteEndPoint)
     {
-        List,
-        Get
+        var client = new TcpClient();
+        await client.ConnectAsync(remoteEndPoint);
+
+        return new FtpClient(client);
     }
 
-    public FtpClient(IPEndPoint remoteEndPoint)
-    {
-        _client = new TcpClient();
-
-        _client.Connect(remoteEndPoint);
-
-        _stream = _client.GetStream();
-    }
-
-    public FtpClient(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint)
-    {
-        _client = new TcpClient(localEndPoint);
-
-        _client.Connect(remoteEndPoint);
-
-        _stream = _client.GetStream();
-    }
-
-    public async Task HandleRequestAsync(RequestType type, string path)
+    /// <summary>
+    /// Asynchronously handles an FTP request and returns the response from the server.
+    /// </summary>
+    /// <param name="request">The FTP request to be processed.</param>
+    /// <returns>The response from the FTP server.</returns>
+    public async Task<Response> HandleRequestAsync(Request request)
     {
         _semaphore.WaitOne();
         try
         {
-            switch (type)
+            var writer = new StreamWriter(_client.GetStream());
+            await writer.WriteAsync(request.ToString());
+            await writer.FlushAsync();
+
+            return request switch
             {
-                case RequestType.List:
-                {
-                    await _stream.WriteAsync(Encoding.UTF8.GetBytes($"2 {path}\n"));
-                    await _stream.FlushAsync();
-                    await _handleListResponse();
-                    break;
-                }
-                case RequestType.Get:
-                {
-                    await _stream.WriteAsync(Encoding.UTF8.GetBytes($"2 {path}\n"));
-                    await _stream.FlushAsync();
-                    await _handleGetResponse();
-                    break;
-                }
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
-            }
+                Request.List => await _handleListResponseAsync(),
+                Request.Get => await _handleGetResponseAsync(),
+                Request.Unknown => _handleNoneResponse()
+            };
         }
         finally
         {
@@ -69,59 +63,40 @@ public class FtpClient : IDisposable
     }
 
 
-    private async Task _handleListResponse()
+    private async Task<Response> _handleListResponseAsync()
     {
-        var size = _readSize();
-        if (size == -1)
-        {
-            Console.WriteLine("No such directory");
-            return;
-        }
-
-        var buffer = new byte[BufferSize];
-        var builder = new StringBuilder();
-        int bytesCount;
-        do
-        {
-            bytesCount = await _stream.ReadAsync(buffer);
-            builder.Append(Encoding.UTF8.GetString(buffer, 0, bytesCount));
-        } while (buffer[bytesCount - 1] != '\n');
-
-        Console.WriteLine(builder.ToString());
+        var reader = new StreamReader(_client.GetStream());
+        return Response.List.Parse(await reader.ReadLineAsync());
     }
-
-
-    private async Task _handleGetResponse()
+    
+    
+    private async Task<Response> _handleGetResponseAsync()
     {
-        var size = _readSize();
-        if (size == -1)
-        {
-            Console.WriteLine("No such file");
-            return;
-        }
-        
+        var stream = _client.GetStream();
+        var sizeBuffer = new byte[LongSizeBuffer];
+
+        await stream.ReadAsync(sizeBuffer);
+        var size = BitConverter.ToInt64(sizeBuffer, 0);
+
         var buffer = new byte[BufferSize];
         var bytes = new List<byte>();
-        while (bytes.Count != size)
+        while (bytes.Count < size)
         {
-            
+            await stream.ReadAsync(buffer);
+            bytes.AddRange(buffer);
         }
+
+        return Response.Get.Parse(size, bytes);
     }
 
 
-    private int _readSize()
-    {
-        var sizeBytes = new List<byte>();
+    private Response _handleNoneResponse()
+        => Response.None.Instance;
 
-        int singleByte;
-        while ((singleByte = _stream.ReadByte()) != ' ')
-        {
-            sizeBytes.Add((byte)singleByte);
-        }
-
-        return int.Parse(Encoding.UTF8.GetString(sizeBytes.ToArray()));
-    }
-
+    
+    /// <summary>
+    /// Releases the resources used by the FtpClient.
+    /// </summary>
     public void Dispose()
     {
         _client.Dispose();

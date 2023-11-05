@@ -1,54 +1,85 @@
-﻿using System.Text;
+﻿using Protocol;
+using Protocol.Models;
 
 namespace FTP_Server.Utils;
 
+/// <summary>
+/// The RequestHandlers class provides utility methods for handling FTP client requests.
+/// </summary>
 public static class RequestHandlers
 {
-    private const int LackOfFile = -1;
-
-    public static async Task ListFilesAsync(string path, Stream stream)
+    /// <summary>
+    /// Asynchronously sends a "List" response to the client based on the specified request.
+    /// </summary>
+    /// <param name="request">The "List" request containing the path to list.</param>
+    /// <param name="stream">The stream to send the response to.</param>
+    public static async Task SendListResponseAsync(Request.List request, Stream stream)
     {
-        if (!Directory.Exists(path))
+        if (!Directory.Exists(request.Path))
         {
-            await SendStringAsync(LackOfFile.ToString(), stream);
+            await SendResponseAsync(new Response.List(new List<ListEntry>(), false), stream);
             return;
         }
 
-        var innerPaths = Directory.EnumerateFileSystemEntries(path).ToArray();
-        var builder = new StringBuilder(innerPaths.Length.ToString());
+        var innerPaths = Directory.EnumerateFileSystemEntries(request.Path).ToArray();
+        var listEntries = innerPaths.Select(innerPath
+            => new ListEntry(Path.GetFileName(innerPath), Directory.Exists(innerPath))).ToList();
 
-        foreach (var innerPath in innerPaths)
+        await SendResponseAsync(new Response.List(listEntries, true), stream);
+    }
+
+    /// <summary>
+    /// Asynchronously sends a "Get" response to the client based on the specified request.
+    /// </summary>
+    /// <param name="request">The "Get" request containing the path to retrieve.</param>
+    /// <param name="stream">The stream to send the response to.</param>
+    public static async Task SendGetResponseAsync(Request.Get request, Stream stream)
+    {
+        if (!File.Exists(request.Path))
         {
-            builder.Append($" {Path.GetFileName(innerPath)} {Directory.Exists(innerPath)}");
+            await SendResponseAsync(new Response.Get(new List<byte>(), false), stream);
+            return;
         }
 
-        builder.Append('\n');
-
-        await SendStringAsync(builder.ToString(), stream);
+        var bytes = await File.ReadAllBytesAsync(request.Path);
+        await SendResponseAsync(new Response.Get(bytes.ToList(), true), stream);
     }
 
-    public static async Task GetFileAsync(string path, Stream stream)
+    /// <summary>
+    /// Asynchronously sends a "None" response to the client based on the specified request.
+    /// </summary>
+    /// <param name="request">The "None" request.</param>
+    /// <param name="stream">The stream to send the response to.</param>
+    public static async Task SendNoneResponseAsync(Request.Unknown request, Stream stream)
+        => await SendResponseAsync(Response.None.Instance, stream);
+
+    
+    private static async Task SendResponseAsync(Response response, Stream stream)
     {
-        if (!File.Exists(path))
+        var writer = new StreamWriter(stream);
+        switch (response)
         {
-            await SendStringAsync(LackOfFile.ToString(), stream);
+            case Response.List list:
+            {
+                await writer.WriteAsync(list.ToString());
+                break;
+            }
+            case Response.Get get:
+            {
+                await stream.WriteAsync(BitConverter.GetBytes(get.Bytes.Count > 0
+                    ? (long)get.Bytes.Count
+                    : -1L));
+                await stream.WriteAsync(get.Bytes.ToArray());
+                break;
+            }
+            case Response.None none:
+            {
+                await writer.WriteAsync(none.ToString());
+                break;
+            }
         }
 
-        var bytes = await File.ReadAllBytesAsync(path);
-        await SendStringAsync(bytes.Length.ToString() + ' ', stream);
-        await SendBytesAsync(bytes, stream);
-    }
-
-    public static async Task SendStringAsync(string message, Stream stream)
-    {
-        await stream.WriteAsync(Encoding.UTF8.GetBytes(message));
-        await stream.FlushAsync();
-    }
-
-    public static async Task SendBytesAsync(byte[] bytes, Stream stream)
-    {
-        await stream.WriteAsync(bytes);
-        await stream.WriteAsync("\n"u8.ToArray());
+        await writer.FlushAsync();
         await stream.FlushAsync();
     }
 }

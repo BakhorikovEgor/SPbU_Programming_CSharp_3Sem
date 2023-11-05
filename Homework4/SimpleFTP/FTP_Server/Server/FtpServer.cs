@@ -1,50 +1,53 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using FTP_Server.Exceptions;
 using FTP_Server.Utils;
+using Protocol;
 
 namespace FTP_Server.Server;
 
+/// <summary>
+/// The FtpServer class represents an FTP server for handling FTP client requests.
+/// </summary>
 public class FtpServer
 {
     private volatile bool _isStarted;
-    private CancellationTokenSource _source;
 
-    private const int BufferSize = 512;
+    private readonly TcpListener _listener;
 
-    public IPEndPoint EndPoint { get; }
-
-
+    /// <summary>
+    /// Initializes a new instance of the FtpServer class with the specified endpoint.
+    /// </summary>
+    /// <param name="endPoint">The endpoint at which the FTP server should listen for incoming connections.</param>
     public FtpServer(IPEndPoint endPoint)
     {
-        EndPoint = endPoint;
-
+        _listener = new TcpListener(endPoint);
         _isStarted = false;
-        _source = new CancellationTokenSource();
     }
 
-
+    /// <summary>
+    /// Asynchronously starts the FTP server and begins listening for incoming client connections.
+    /// </summary>
+    /// <exception cref="FtpServerAlreadyStartedException">Thrown if the server is already started.</exception>
     public async Task StartAsync()
     {
         _isStarted = _isStarted
             ? throw new FtpServerAlreadyStartedException("This server is already started.")
             : true;
 
-        var listener = new TcpListener(EndPoint.Address, EndPoint.Port);
         try
         {
-            listener.Start();
+            _listener.Start();
 
-            Console.WriteLine($"Server is working...  \n Ip: {EndPoint.Address}  Port: {EndPoint.Port}");
+            Console.WriteLine("Server is working...");
 
             var tasks = new List<Task>();
-            while (!_source.IsCancellationRequested)
+            while (_isStarted)
             {
-                var client = await listener.AcceptTcpClientAsync();
+                var client = await _listener.AcceptTcpClientAsync();
                 var clientEndPoint = (IPEndPoint)client.Client.RemoteEndPoint!;
 
-                Console.WriteLine($"\n New client \n Ip: {clientEndPoint.Address} Port: {clientEndPoint.Port}");
+                Console.WriteLine($"\nNew client \nIp: {clientEndPoint.Address} Port: {clientEndPoint.Port}");
 
                 tasks.Add(Task.Run(async () => await _handleClientAsync(client, clientEndPoint)));
             }
@@ -55,55 +58,43 @@ public class FtpServer
         }
         finally
         {
-            listener.Stop();
-            _reset();
+            Stop();
         }
     }
 
-
+    /// <summary>
+    /// Stops the FTP server and closes the listening socket.
+    /// </summary>
     public void Stop()
     {
-        if (_isStarted)
-        {
-            _source.Cancel();
-        }
+        _listener.Stop();
+        _isStarted = false;
     }
 
-
+    
     private async Task _handleClientAsync(TcpClient client, IPEndPoint clientEndPoint)
     {
         try
         {
-            var stream = client.GetStream();
-
-            while (client.Connected || !_source.IsCancellationRequested)
+            using var reader = new StreamReader(client.GetStream());
+            while (client.Connected && _isStarted)
             {
-                var buffer = new byte[BufferSize];
-                var builder = new StringBuilder();
-                int bytesCount;
-                do
-                {
-                    bytesCount = await stream.ReadAsync(buffer);
-                    builder.Append(Encoding.UTF8.GetString(buffer, 0, bytesCount));
-                } while (buffer[bytesCount - 1] != '\n');
+                var request = Request.Parse(await reader.ReadLineAsync());
 
-                var requestParts = builder.ToString().Split();
-                if (requestParts.Length < 2)
-                {
-                    await RequestHandlers.SendStringAsync("No such request.", stream);
-                    return;
-                }
+                Console.WriteLine(
+                    $"\nRequest from client \nIp: {clientEndPoint.Address} Port: {clientEndPoint.Port} \n" +
+                    $"Request: {request}");
 
-                switch (requestParts[0])
+                switch (request)
                 {
-                    case "1":
-                        await RequestHandlers.ListFilesAsync(requestParts[1], stream);
+                    case Request.List list:
+                        await RequestHandlers.SendListResponseAsync(list, client.GetStream());
                         break;
-                    case "2":
-                        await RequestHandlers.GetFileAsync(requestParts[1], stream);
+                    case Request.Get get:
+                        await RequestHandlers.SendGetResponseAsync(get, client.GetStream());
                         break;
-                    default:
-                        await RequestHandlers.SendStringAsync("No such request.", stream);
+                    case Request.Unknown none:
+                        await RequestHandlers.SendNoneResponseAsync(none, client.GetStream());
                         break;
                 }
             }
@@ -111,13 +102,7 @@ public class FtpServer
         finally
         {
             client.Dispose();
-            Console.WriteLine($"\n Disconnect client \n Ip: {clientEndPoint.Address} Port: {clientEndPoint.Port}");
+            Console.WriteLine($"\nDisconnect client \nIp: {clientEndPoint.Address} Port: {clientEndPoint.Port}");
         }
-    }
-
-    private void _reset()
-    {
-        _isStarted = false;
-        _source = new CancellationTokenSource();
     }
 }
