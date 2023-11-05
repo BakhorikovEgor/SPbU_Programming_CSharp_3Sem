@@ -39,6 +39,7 @@ public abstract record Response
             => ListEntries.Count == 0
                 ? "-1\n"
                 : $"{ListEntries.Count} {string.Join(' ', ListEntries)}\n";
+        
 
         private static long _parseSize(string response)
             => response[0] == '-'

@@ -82,8 +82,11 @@ public class FtpClient : IDisposable
         var bytes = new List<byte>();
         while (bytes.Count < size)
         {
-            await stream.ReadAsync(buffer);
-            bytes.AddRange(buffer);
+            var bytesCount = await stream.ReadAsync(buffer);
+            for (var i = 0; i < bytesCount; ++i)
+            {
+                bytes.Add(buffer[i]);
+            }
         }
 
         return Response.Get.Parse(size, bytes);
