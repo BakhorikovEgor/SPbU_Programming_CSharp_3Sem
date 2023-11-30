@@ -9,9 +9,13 @@ public class Tests
         Environment.CurrentDirectory = "../../../";
     }
     
-    [TestCase("TestDirs/EmptyDir")]
-    public void CheckEmptyDir_ShouldReturnDirName(string path)
+
+    [Test]
+    public void CheckEmptyDir_ShouldReturnDirName()
     {
+        const string path = "TestDirs/EmptyDir";
+        Directory.CreateDirectory("TestDirs/EmptyDir");
+        
         var name = Path.GetFileName(path);
         var single = Encoding.UTF8.GetString(CheckSumHelper.SingleThreadCheckSum(path));
         var multi = Encoding.UTF8.GetString(CheckSumHelper.MultiThreadCheckSum(path).Result);

@@ -13,11 +13,11 @@ try
     var watch = new Stopwatch();
 
     watch.Start();
-    var a = CheckSumHelper.SingleThreadCheckSum(args[0]);
+    var singleThreadCheckSum = CheckSumHelper.SingleThreadCheckSum(args[0]);
     watch.Stop();
 
     Console.WriteLine($"SingleThread time : {watch.ElapsedMilliseconds}");
-    Console.WriteLine($"SingleThread result : {BitConverter.ToString(a)}");
+    Console.WriteLine($"SingleThread result : {BitConverter.ToString(singleThreadCheckSum)}");
         
     watch.Reset();
     watch.Start();
@@ -27,7 +27,7 @@ try
     Console.WriteLine($"MultiThread time is {watch.ElapsedMilliseconds}");
     Console.WriteLine($"MultiThread result : {BitConverter.ToString(multiThreadCheckSum)}");
 
-    Console.WriteLine($"Are results equal {a.SequenceEqual(multiThreadCheckSum)}");
+    Console.WriteLine($"Are results equal {singleThreadCheckSum.SequenceEqual(multiThreadCheckSum)}");
 }
 catch (Exception e) when (e is ArgumentException or IOException)
 {
