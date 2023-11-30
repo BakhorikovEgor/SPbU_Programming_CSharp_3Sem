@@ -53,11 +53,18 @@ public static class CheckSumHelper
         return await GetDirectoryCacheAsync(path);
     }
 
-    
+
     private static byte[] GetFileCache(string filePath)
         => HashData(File.ReadAllBytes(filePath));
 
+
+    private static async Task<byte[]> GetFileCacheAsync(string filePath)
+    {
+        var bytes = await File.ReadAllBytesAsync(filePath);
+        return HashData(bytes);
+    }
     
+
     private static byte[] GetDirectoryCache(string directoryPath)
     {
         var subDirPaths = Directory.GetDirectories(directoryPath);
@@ -66,28 +73,20 @@ public static class CheckSumHelper
         Array.Sort(subDirPaths);
         Array.Sort(filePaths);
 
-        var preparedBytes = new List<byte>(UTF8.GetBytes(Path.GetDirectoryName(directoryPath) ?? string.Empty));
-        foreach (var innerFilePath in subDirPaths)
+        var preparedBytes = new List<byte>(UTF8.GetBytes(Path.GetFileName(directoryPath) ?? string.Empty));
+        foreach (var innerFilePath in filePaths)
         {
             preparedBytes.AddRange(GetFileCache(innerFilePath));
         }
 
-        foreach (var innerDirPath in filePaths)
+        foreach (var innerDirPath in subDirPaths)
         {
-            preparedBytes.AddRange(GetFileCache(innerDirPath));
+            preparedBytes.AddRange(GetDirectoryCache(innerDirPath));
         }
 
         return preparedBytes.ToArray();
     }
-    
-    
-    private static async Task<byte[]> GetFileCacheAsync(string filePath)
-    {
-        var bytes = await File.ReadAllBytesAsync(filePath);
-        return HashData(bytes);
-    }
-    
-    
+
     private static async Task<byte[]> GetDirectoryCacheAsync(string directoryPath)
     {
         var subDirPaths = Directory.GetDirectories(directoryPath);
@@ -112,7 +111,8 @@ public static class CheckSumHelper
         await Task.WhenAll(fileCacheTasks);
         await Task.WhenAll(directoryCacheTasks);
 
-        var result = new List<byte>(UTF8.GetBytes(Path.GetDirectoryName(directoryPath) ?? string.Empty));
+        var result = new List<byte>(UTF8.GetBytes(Path.GetFileName(directoryPath) ?? string.Empty));
+
         foreach (var fileCacheTask in fileCacheTasks)
         {
             result.AddRange(fileCacheTask.Result);

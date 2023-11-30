@@ -21,4 +21,8 @@
       <ProjectReference Include="..\MD5\MD5.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="TestDirs\EmptyDir\" />
+    </ItemGroup>
+
 </Project>

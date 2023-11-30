@@ -16,22 +16,20 @@ try
     var a = CheckSumHelper.SingleThreadCheckSum(args[0]);
     watch.Stop();
 
-    Console.WriteLine($"SingleThread time is {watch.ElapsedMilliseconds}");
-
+    Console.WriteLine($"SingleThread time : {watch.ElapsedMilliseconds}");
+    Console.WriteLine($"SingleThread result : {BitConverter.ToString(a)}");
+        
     watch.Reset();
     watch.Start();
-    var b = await CheckSumHelper.MultiThreadCheckSum(args[0]);
+    var multiThreadCheckSum = await CheckSumHelper.MultiThreadCheckSum(args[0]);
     watch.Stop();
 
     Console.WriteLine($"MultiThread time is {watch.ElapsedMilliseconds}");
+    Console.WriteLine($"MultiThread result : {BitConverter.ToString(multiThreadCheckSum)}");
 
-    Console.WriteLine(a.SequenceEqual(b));
+    Console.WriteLine($"Are results equal {a.SequenceEqual(multiThreadCheckSum)}");
 }
-catch (ArgumentException e)
+catch (Exception e) when (e is ArgumentException or IOException)
 {
     Console.WriteLine(e.Message);
-}
-catch (IOException)
-{
-    Console.WriteLine("File in use");
 }
