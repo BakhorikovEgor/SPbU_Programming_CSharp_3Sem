@@ -4,12 +4,12 @@ using Protocol.Models;
 namespace FTP_Server.Utils;
 
 /// <summary>
-/// The RequestHandlers class provides utility methods for handling FTP client requests.
+///     The RequestHandlers class provides utility methods for handling FTP client requests.
 /// </summary>
 public static class RequestHandlers
 {
     /// <summary>
-    /// Asynchronously sends a "List" response to the client based on the specified request.
+    ///     Asynchronously sends a "List" response to the client based on the specified request.
     /// </summary>
     /// <param name="request">The "List" request containing the path to list.</param>
     /// <param name="stream">The stream to send the response to.</param>
@@ -29,7 +29,7 @@ public static class RequestHandlers
     }
 
     /// <summary>
-    /// Asynchronously sends a "Get" response to the client based on the specified request.
+    ///     Asynchronously sends a "Get" response to the client based on the specified request.
     /// </summary>
     /// <param name="request">The "Get" request containing the path to retrieve.</param>
     /// <param name="stream">The stream to send the response to.</param>
@@ -46,14 +46,16 @@ public static class RequestHandlers
     }
 
     /// <summary>
-    /// Asynchronously sends a "None" response to the client based on the specified request.
+    ///     Asynchronously sends a "None" response to the client based on the specified request.
     /// </summary>
     /// <param name="request">The "None" request.</param>
     /// <param name="stream">The stream to send the response to.</param>
     public static async Task SendNoneResponseAsync(Request.Unknown request, Stream stream)
-        => await SendResponseAsync(Response.None.Instance, stream);
+    {
+        await SendResponseAsync(Response.None.Instance, stream);
+    }
 
-    
+
     private static async Task SendResponseAsync(Response response, Stream stream)
     {
         var writer = new StreamWriter(stream);
@@ -67,7 +69,7 @@ public static class RequestHandlers
             case Response.Get get:
             {
                 await stream.WriteAsync(BitConverter.GetBytes(get.Bytes.Count > 0
-                    ? (long)get.Bytes.Count
+                    ? get.Bytes.Count
                     : -1L));
                 await stream.WriteAsync(get.Bytes.ToArray());
                 break;

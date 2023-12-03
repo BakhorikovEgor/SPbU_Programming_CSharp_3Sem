@@ -19,9 +19,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FTP_Client\FTP_Client.csproj" />
-      <ProjectReference Include="..\FTP_Server\FTP_Server.csproj" />
-      <ProjectReference Include="..\Protocol\Protocol.csproj" />
+        <ProjectReference Include="..\FTP_Client\FTP_Client.csproj"/>
+        <ProjectReference Include="..\FTP_Server\FTP_Server.csproj"/>
+        <ProjectReference Include="..\Protocol\Protocol.csproj"/>
     </ItemGroup>
 
 </Project>

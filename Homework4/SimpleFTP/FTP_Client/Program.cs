@@ -40,10 +40,7 @@ while (true)
     Console.Write("\nEnter request: ");
     var line = Console.ReadLine();
 
-    if (line == exitMessage)
-    {
-        break;
-    }
+    if (line == exitMessage) break;
 
     switch (line)
     {

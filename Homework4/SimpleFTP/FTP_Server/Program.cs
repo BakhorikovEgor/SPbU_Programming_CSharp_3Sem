@@ -45,9 +45,5 @@ while (true)
         break;
     }
 
-    if (line == showHelpMessage)
-    {
-        Console.WriteLine(helpMessage);
-    }
+    if (line == showHelpMessage) Console.WriteLine(helpMessage);
 }
-

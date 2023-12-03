@@ -7,16 +7,15 @@ using Protocol;
 namespace FTP_Server.Server;
 
 /// <summary>
-/// The FtpServer class represents an FTP server for handling FTP client requests.
+///     The FtpServer class represents an FTP server for handling FTP client requests.
 /// </summary>
 public class FtpServer
 {
+    private readonly TcpListener _listener;
     private volatile bool _isStarted;
 
-    private readonly TcpListener _listener;
-
     /// <summary>
-    /// Initializes a new instance of the FtpServer class with the specified endpoint.
+    ///     Initializes a new instance of the FtpServer class with the specified endpoint.
     /// </summary>
     /// <param name="endPoint">The endpoint at which the FTP server should listen for incoming connections.</param>
     public FtpServer(IPEndPoint endPoint)
@@ -26,7 +25,7 @@ public class FtpServer
     }
 
     /// <summary>
-    /// Asynchronously starts the FTP server and begins listening for incoming client connections.
+    ///     Asynchronously starts the FTP server and begins listening for incoming client connections.
     /// </summary>
     /// <exception cref="FtpServerAlreadyStartedException">Thrown if the server is already started.</exception>
     public async Task StartAsync()
@@ -63,7 +62,7 @@ public class FtpServer
     }
 
     /// <summary>
-    /// Stops the FTP server and closes the listening socket.
+    ///     Stops the FTP server and closes the listening socket.
     /// </summary>
     public void Stop()
     {
@@ -71,7 +70,7 @@ public class FtpServer
         _isStarted = false;
     }
 
-    
+
     private async Task _handleClientAsync(TcpClient client, IPEndPoint clientEndPoint)
     {
         try

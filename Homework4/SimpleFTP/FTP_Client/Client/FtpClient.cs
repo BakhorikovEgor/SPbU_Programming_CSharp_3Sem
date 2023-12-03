@@ -5,25 +5,33 @@ using Protocol;
 namespace FTP_Client.Client;
 
 /// <summary>
-/// The FtpClient class represents an FTP client for interacting with an FTP server.
+///     The FtpClient class represents an FTP client for interacting with an FTP server.
 /// </summary>
 public class FtpClient : IDisposable
 {
+    private const int BufferSize = 512;
+    private const int LongSizeBuffer = 8;
     private readonly TcpClient _client;
     private readonly Semaphore _semaphore = new(1, 1);
 
-    private const int BufferSize = 512;
-    private const int LongSizeBuffer = 8;
 
-    /// <summary>
-    /// Initializes a new instance of the FtpClient class based on an existing TcpClient.
-    /// </summary>
-    /// <param name="client">A TcpClient representing the connection to the FTP server.</param>
     private FtpClient(TcpClient client)
-        => _client = client;
+    {
+        _client = client;
+    }
+
 
     /// <summary>
-    /// Asynchronously creates a new instance of the FtpClient class and connects to a remote FTP server.
+    ///     Releases the resources used by the FtpClient.
+    /// </summary>
+    public void Dispose()
+    {
+        _client.Dispose();
+        _semaphore.Dispose();
+    }
+
+    /// <summary>
+    ///     Asynchronously creates a new instance of the FtpClient class and connects to a remote FTP server.
     /// </summary>
     /// <param name="remoteEndPoint">An IPEndPoint representing the remote FTP server.</param>
     /// <returns>An instance of FtpClient connected to the remote FTP server.</returns>
@@ -36,7 +44,7 @@ public class FtpClient : IDisposable
     }
 
     /// <summary>
-    /// Asynchronously handles an FTP request and returns the response from the server.
+    ///     Asynchronously handles an FTP request and returns the response from the server.
     /// </summary>
     /// <param name="request">The FTP request to be processed.</param>
     /// <returns>The response from the FTP server.</returns>
@@ -68,8 +76,8 @@ public class FtpClient : IDisposable
         var reader = new StreamReader(_client.GetStream());
         return Response.List.Parse(await reader.ReadLineAsync());
     }
-    
-    
+
+
     private async Task<Response> _handleGetResponseAsync()
     {
         var stream = _client.GetStream();
@@ -83,10 +91,7 @@ public class FtpClient : IDisposable
         while (bytes.Count < size)
         {
             var bytesCount = await stream.ReadAsync(buffer);
-            for (var i = 0; i < bytesCount; ++i)
-            {
-                bytes.Add(buffer[i]);
-            }
+            for (var i = 0; i < bytesCount; ++i) bytes.Add(buffer[i]);
         }
 
         return Response.Get.Parse(size, bytes);
@@ -94,15 +99,7 @@ public class FtpClient : IDisposable
 
 
     private Response _handleNoneResponse()
-        => Response.None.Instance;
-
-    
-    /// <summary>
-    /// Releases the resources used by the FtpClient.
-    /// </summary>
-    public void Dispose()
     {
-        _client.Dispose();
-        _semaphore.Dispose();
+        return Response.None.Instance;
     }
 }

@@ -87,11 +87,11 @@ public class ProtocolTests
         Assert.That(parsedResponse.IsQueryCorrect, Is.True);
         CollectionAssert.AreEqual(new ListEntry[]
         {
-            new ListEntry("file1.txt", true),
-            new ListEntry("file2.txt", false)
+            new("file1.txt", true),
+            new("file2.txt", false)
         }, parsedResponse.ListEntries);
     }
-    
+
     [Test]
     public void GetResponseParseValidResponse()
     {
@@ -99,7 +99,7 @@ public class ProtocolTests
         var parsedResponse = Response.Get.Parse(5, responseBytes);
 
         Assert.That(parsedResponse.IsQueryCorrect, Is.True);
-        CollectionAssert.AreEqual(new byte[] { 65, 66, 67, 68, 69 }, parsedResponse.Bytes);
+        CollectionAssert.AreEqual("ABCDE"u8.ToArray(), parsedResponse.Bytes);
     }
 
     [Test]

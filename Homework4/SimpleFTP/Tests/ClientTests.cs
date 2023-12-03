@@ -1,17 +1,10 @@
 using System.Net;
-using Protocol.Models;
 
 namespace Tests;
 
 [TestFixture]
 public class FtpClientTests
 {
-    private FtpServer _server;
-    private FtpClient _client;
-
-    private const int Port = 12345;
-    private const string MainPath = "../../../../Tests/";
-
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
@@ -29,16 +22,51 @@ public class FtpClientTests
         _server.Stop();
         _client.Dispose();
     }
-    
-    [Test]
-    public async Task HandleGetRequestAsync_ValidRequest_ValidResponse()
+
+    private FtpServer _server;
+    private FtpClient _client;
+
+    private const int Port = 12345;
+    private const string MainPath = "../../../../Tests/";
+
+
+    [TestCase(MainPath + "TestFiles/WarAndPeace.fb2")]
+    public async Task HandleGetRequestAsync_ValidRequest_ValidResponse(string path)
     {
-        const string path = MainPath + "TestFiles/WarAndPeace.fb2";
         var request = new Request.Get(path);
         var data = await File.ReadAllBytesAsync(path);
 
         var response = (Response.Get)await _client.HandleRequestAsync(request);
 
         Assert.That(data.SequenceEqual(response.Bytes));
+    }
+
+
+    [TestCase(MainPath + "TestDirectories/SimpleDirectory")]
+    public async Task HandleListRequestAsync_ValidRequest_ValidResponse(string path)
+    {
+        var request = new Request.List(path);
+        var response = (Response.List)await _client.HandleRequestAsync(request);
+
+        var subDirs = Directory.GetFileSystemEntries(path);
+        var entries = response.ListEntries;
+
+        Assert.That(subDirs, Has.Length.EqualTo(entries.Count));
+
+        Array.Sort(subDirs);
+        entries.Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
+
+        for (var i = 0; i < subDirs.Length; ++i) Assert.That(Path.GetFileName(subDirs[i]), Is.EqualTo(entries[i].Name));
+    }
+
+
+    [Test]
+    public async Task TestHandleUnknownRequestAsync()
+    {
+        using var client = await FtpClient.CreateAsync(new IPEndPoint(IPAddress.Loopback, Port));
+        var request = Request.Unknown.Instance;
+        var response = await client.HandleRequestAsync(request);
+
+        Assert.That(response, Is.InstanceOf<Response.None>());
     }
 }
