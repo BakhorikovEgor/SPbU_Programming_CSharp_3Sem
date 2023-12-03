@@ -61,7 +61,8 @@ public class FtpClient : IDisposable
             {
                 Request.List => await _handleListResponseAsync(),
                 Request.Get => await _handleGetResponseAsync(),
-                Request.Unknown => _handleNoneResponse()
+                Request.Unknown => _handleNoneResponse(),
+                _ => _handleNoneResponse()
             };
         }
         finally

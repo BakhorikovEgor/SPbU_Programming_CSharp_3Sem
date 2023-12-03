@@ -33,6 +33,7 @@ if (args.Length != 3 || !Directory.Exists(args[0]) || !IPAddress.TryParse(args[1
 var endPoint = new IPEndPoint(ip, port);
 var server = new FtpServer(endPoint);
 
+#pragma warning disable
 server.StartAsync();
 
 while (true)

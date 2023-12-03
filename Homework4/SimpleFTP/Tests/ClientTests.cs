@@ -11,6 +11,8 @@ public class FtpClientTests
         var endPoint = new IPEndPoint(IPAddress.Loopback, Port);
 
         _server = new FtpServer(endPoint);
+        
+        #pragma warning disable
         _server.StartAsync();
 
         _client = await FtpClient.CreateAsync(endPoint);

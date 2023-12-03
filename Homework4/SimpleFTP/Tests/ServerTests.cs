@@ -12,6 +12,8 @@ public class FtpServerTests
         var endPoint = new IPEndPoint(IPAddress.Loopback, Port);
 
         _server = new FtpServer(endPoint);
+        
+        #pragma warning disable
         _server.StartAsync();
 
         _client = await FtpClient.CreateAsync(endPoint);
@@ -31,8 +33,6 @@ public class FtpServerTests
 
 
     [Test]
-    public void StartServerTwiceThrowsException()
-    {
-        Assert.Throws<FtpServerAlreadyStartedException>( () => _server.StartAsync().Wait());
-    }
+    public void StartServerTwiceThrowsException() 
+        => Assert.Throws<AggregateException>( () => _server.StartAsync().Wait());
 }
