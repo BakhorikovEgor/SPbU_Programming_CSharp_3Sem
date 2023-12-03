@@ -31,8 +31,8 @@ public class FtpServerTests
 
 
     [Test]
-    public async Task StartServerTwiceThrowsException()
+    public void StartServerTwiceThrowsException()
     {
-        Assert.Throws<FtpServerAlreadyStartedException>(async () => await _server.StartAsync());
+        Assert.Throws<FtpServerAlreadyStartedException>( () => _server.StartAsync().Wait());
     }
 }
