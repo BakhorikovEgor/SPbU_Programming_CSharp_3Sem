@@ -1,6 +1,6 @@
 ﻿namespace MyNUnit.Attributes;
 
 [AttributeUsage(AttributeTargets.Method)]
-public class BeforeAttribute : TestMethodAttribute
+public class BeforeAttribute : NonStaticTestMethodAttribute
 {
 }

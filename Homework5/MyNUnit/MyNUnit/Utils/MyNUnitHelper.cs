@@ -5,14 +5,17 @@ namespace MyNUnit.Utils;
 
 public static class MyNUnitHelper
 {
-    public static async Task RunTests(string path)
+    public static async Task<IEnumerable<TestClassReportModel>> RunTestsAsync(string path)
     {
         if (!File.Exists(path) && !Directory.Exists(path))
         {
             throw new ArgumentException("No such file or directory !");
         }
-
+        
         var assemblies = _collectAllAssembliesByPath(path);
+        var testClassModels = await _collectTestClassModelsByAssembliesAsync(assemblies.ToArray());
+
+        return await _runTestsByTestClassModelsAsync(testClassModels.ToArray());
     }
 
     private static IEnumerable<Assembly> _collectAllAssembliesByPath(string path)
@@ -23,34 +26,42 @@ public static class MyNUnitHelper
             : Directory.GetFiles(path, "*.dll").Select(Assembly.LoadFrom);
 
 
-    private static async Task<IEnumerable<TestClassModel>> _collectTestClassesFromAssembly(Assembly assembly)
+    private static async Task<IEnumerable<TestClassModel>> _collectTestClassModelsByAssembliesAsync(
+        Assembly[] assemblies)
     {
-        var models = new List<TestClassModel>();
-        var classes = assembly.GetTypes().Where(t => t.IsClass);
-
-        foreach (var @class in classes)
+        var classTypes = new List<Type>();
+        foreach (var assembly in assemblies)
         {
+            classTypes.AddRange(assembly.GetTypes().Where(type => type.IsClass).ToArray());
         }
 
-        return null;
+        var result = new TestClassModel[classTypes.Count()];
+        var tasks = new Task[classTypes.Count()];
+        for (var i = 0; i < result.Length; ++i)
+        {
+            var locI = i;
+            tasks[i] = Task.Run(() => { result[locI] = TestClassModel.GenerateFromClass(classTypes[locI]); });
+        }
+
+        await Task.WhenAll(tasks);
+        return result;
     }
 
-    private static void createTestClassByClass(Type classType)
+    private static async Task<IEnumerable<TestClassReportModel>> _runTestsByTestClassModelsAsync(
+        TestClassModel[] testClassModels)
     {
-        var afterClassMethods = new List<MethodInfo>();
-        var beforeClassMethods = new List<MethodInfo>();
-        var afterMethods = new List<MethodInfo>();
-        var beforeMethods = new List<MethodInfo>();
-        var testMethods = new List<MethodInfo>();
-
-        foreach (var method in classType.GetMethods())
+        var result = new TestClassReportModel[testClassModels.Length];
+        var tasks = new Task[testClassModels.Length];
+        for (var i = 0; i < testClassModels.Length; ++i)
         {
-            if (method.ReturnType != typeof(void))
+            var locI = i;
+            tasks[i] = testClassModels[i].RunTestsAsync().ContinueWith(reportTask =>
             {
-                continue;
-            }
-            
-            
+                result[locI] = reportTask.Result;
+            });
         }
+
+        await Task.WhenAll(tasks);
+        return result;
     }
 }
