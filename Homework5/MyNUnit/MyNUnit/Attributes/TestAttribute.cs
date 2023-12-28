@@ -1,6 +1,6 @@
 ﻿namespace MyNUnit.Attributes;
 
 [AttributeUsage(AttributeTargets.Method)]
-public class TestAttribute
+public class TestAttribute : TestMethodAttribute
 {
 }

@@ -1,7 +1,6 @@
-﻿using System.Reflection;
+﻿namespace MyNUnit.Attributes;
 
-namespace MyNUnit.Attributes;
-
-public class BeforeClassAttribute
+[AttributeUsage(AttributeTargets.Method)]
+public class BeforeClassAttribute : TestMethodAttribute
 {
 }

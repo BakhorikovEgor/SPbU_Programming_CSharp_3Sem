@@ -23,7 +23,7 @@ public static class MyNUnitHelper
             : Directory.GetFiles(path, "*.dll").Select(Assembly.LoadFrom);
 
 
-    private static async Task<IEnumerable<TestClassModel>> GetTestClassesFromAssembly(Assembly assembly)
+    private static async Task<IEnumerable<TestClassModel>> _collectTestClassesFromAssembly(Assembly assembly)
     {
         var models = new List<TestClassModel>();
         var classes = assembly.GetTypes().Where(t => t.IsClass);
@@ -35,7 +35,7 @@ public static class MyNUnitHelper
         return null;
     }
 
-    private static void GetTestClassByClass(Type classType)
+    private static void createTestClassByClass(Type classType)
     {
         var afterClassMethods = new List<MethodInfo>();
         var beforeClassMethods = new List<MethodInfo>();
@@ -45,6 +45,12 @@ public static class MyNUnitHelper
 
         foreach (var method in classType.GetMethods())
         {
+            if (method.ReturnType != typeof(void))
+            {
+                continue;
+            }
+            
+            
         }
     }
 }

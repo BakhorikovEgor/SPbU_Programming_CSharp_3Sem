@@ -1,6 +1,6 @@
 ﻿namespace MyNUnit.Attributes;
 
 [AttributeUsage(AttributeTargets.Method)]
-public class BeforeAttribute
+public class BeforeAttribute : TestMethodAttribute
 {
 }
