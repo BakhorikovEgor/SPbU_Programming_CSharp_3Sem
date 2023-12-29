@@ -11,7 +11,7 @@ public static class MyNUnitHelper
         {
             throw new ArgumentException("No such file or directory !");
         }
-        
+
         var assemblies = _collectAllAssembliesByPath(path);
         var testClassModels = await _collectTestClassModelsByAssembliesAsync(assemblies.ToArray());
 
