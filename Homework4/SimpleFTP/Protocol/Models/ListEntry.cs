@@ -9,8 +9,5 @@ public record ListEntry(string Name, bool IsDirectory)
     ///     Converts the ListEntry to a string representation in the format "Name IsDirectory".
     /// </summary>
     /// <returns>A string representation of the ListEntry.</returns>
-    public override string ToString()
-    {
-        return $"{Name} {IsDirectory}";
-    }
+    public override string ToString() => $"{Name} {IsDirectory}";
 }

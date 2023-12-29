@@ -18,9 +18,11 @@ public abstract record Request
     /// <returns>An instance of a derived Request type based on the input string.</returns>
     public static Request Parse(string? request)
     {
-        if (request is null || request.Length <= 2) return Unknown.Instance;
+        if (request is null || request.Length <= 2) 
+            return Unknown.Instance;
 
-        if (request == UnknownString) return Unknown.Instance;
+        if (request == UnknownString) 
+            return Unknown.Instance;
 
         return request[0] switch
         {
@@ -39,10 +41,7 @@ public abstract record Request
     public sealed record List(string Path) : Request
     {
         /// <inheritdoc />
-        public override string ToString()
-        {
-            return $"1 {Path}\n";
-        }
+        public override string ToString() => $"1 {Path}\n";
     }
 
     /// <summary>
@@ -51,10 +50,7 @@ public abstract record Request
     public sealed record Get(string Path) : Request
     {
         /// <inheritdoc />
-        public override string ToString()
-        {
-            return $"2 {Path}\n";
-        }
+        public override string ToString() => $"2 {Path}\n";
     }
 
     /// <summary>
@@ -74,9 +70,6 @@ public abstract record Request
         public static Unknown Instance => Lazy.Value;
 
         /// <inheritdoc />
-        public override string ToString()
-        {
-            return UnknownString + '\n';
-        }
+        public override string ToString() => UnknownString + '\n';
     }
 }

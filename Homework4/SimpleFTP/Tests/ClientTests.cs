@@ -58,7 +58,11 @@ public class FtpClientTests
         Array.Sort(subDirs);
         entries.Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 
-        for (var i = 0; i < subDirs.Length; ++i) Assert.That(Path.GetFileName(subDirs[i]), Is.EqualTo(entries[i].Name));
+        Assert.Multiple( () =>
+        {
+            for (var i = 0; i < subDirs.Length; ++i) 
+                Assert.That(Path.GetFileName(subDirs[i]), Is.EqualTo(entries[i].Name));
+        });
     }
 
 

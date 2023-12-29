@@ -9,8 +9,8 @@ namespace FTP_Client.Client;
 /// </summary>
 public class FtpClient : IDisposable
 {
-    private const int BufferSize = 512;
-    private const int LongSizeBuffer = 8;
+    private const int BUFFER_SIZE = 512;
+    private const int LONGSIZE_BUFFER = 8;
     private readonly TcpClient _client;
     private readonly Semaphore _semaphore = new(1, 1);
 
@@ -19,7 +19,6 @@ public class FtpClient : IDisposable
     {
         _client = client;
     }
-
 
     /// <summary>
     ///     Releases the resources used by the FtpClient.
@@ -65,6 +64,10 @@ public class FtpClient : IDisposable
                 _ => _handleNoneResponse()
             };
         }
+        catch
+        {
+            throw new InvalidOperationException("Request handling gone wrong!");
+        }
         finally
         {
             _semaphore.Release();
@@ -82,25 +85,23 @@ public class FtpClient : IDisposable
     private async Task<Response> _handleGetResponseAsync()
     {
         var stream = _client.GetStream();
-        var sizeBuffer = new byte[LongSizeBuffer];
+        var sizeBuffer = new byte[LONGSIZE_BUFFER];
 
         await stream.ReadAsync(sizeBuffer);
         var size = BitConverter.ToInt64(sizeBuffer, 0);
 
-        var buffer = new byte[BufferSize];
+        var buffer = new byte[BUFFER_SIZE];
         var bytes = new List<byte>();
         while (bytes.Count < size)
         {
             var bytesCount = await stream.ReadAsync(buffer);
-            for (var i = 0; i < bytesCount; ++i) bytes.Add(buffer[i]);
+            for (var i = 0; i < bytesCount; ++i) 
+                bytes.Add(buffer[i]);
         }
 
         return Response.Get.Parse(size, bytes);
     }
 
 
-    private Response _handleNoneResponse()
-    {
-        return Response.None.Instance;
-    }
+    private Response _handleNoneResponse() => Response.None.Instance;
 }

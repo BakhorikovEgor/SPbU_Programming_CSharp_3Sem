@@ -37,22 +37,15 @@ public abstract record Response
         }
 
         /// <inheritdoc />
-        public override string ToString()
-        {
-            return ListEntries.Count == 0
-                ? "-1\n"
-                : $"{ListEntries.Count} {string.Join(' ', ListEntries)}\n";
-        }
+        public override string ToString() =>  ListEntries.Count == 0
+            ? "-1\n"
+            : $"{ListEntries.Count} {string.Join(' ', ListEntries)}\n";
 
 
-        private static long _parseSize(string response)
-        {
-            return response[0] == '-'
-                ? -1
-                : response.TakeWhile(t => t != ' ')
-                    .Aggregate(0, (current, t) => current * 10 + (t - '0'));
-        }
-    }
+        private static long _parseSize(string response) => response[0] == '-'
+            ? -1
+            : response.TakeWhile(t => t != ' ')
+                .Aggregate(0, (current, t) => current * 10 + (t - '0'));    }
 
     /// <summary>
     ///     Represents a "Get" response containing a list of bytes.
@@ -65,12 +58,9 @@ public abstract record Response
         /// <param name="size">The size of the response in bytes.</param>
         /// <param name="responseBytes">The byte data of the response.</param>
         /// <returns>A Get response with byte data and an indication of correctness.</returns>
-        public static Get Parse(long size, List<byte> responseBytes)
-        {
-            return size == -1
-                ? new Get(responseBytes, false)
-                : new Get(responseBytes, true);
-        }
+        public static Get Parse(long size, List<byte> responseBytes) => size == -1
+            ? new Get(responseBytes, false)
+            : new Get(responseBytes, true);
     }
 
     /// <summary>
@@ -91,9 +81,6 @@ public abstract record Response
 
 
         /// <inheritdoc />
-        public override string ToString()
-        {
-            return "None Response\n";
-        }
+        public override string ToString() => "None Response\n";
     }
 }
